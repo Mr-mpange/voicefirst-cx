@@ -108,7 +108,7 @@ const Index = () => {
       try {
         const { data, error } = await supabase
           .from("conversations")
-          .insert({ language: selectedLanguage, status: "active" })
+          .insert({ language: selectedLanguage, status: "active", user_id: user?.id })
           .select("id")
           .single();
         if (error) throw error;
