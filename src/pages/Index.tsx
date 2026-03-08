@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import type { AIState, TranscriptMessage } from "@/lib/mockData";
 
 const Index = () => {
+  const { user } = useAuth();
   const [aiState, setAiState] = useState<AIState>("idle");
   const [callActive, setCallActive] = useState(false);
   const [seconds, setSeconds] = useState(0);
