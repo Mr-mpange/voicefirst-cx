@@ -55,7 +55,7 @@ const ConversationHistory = () => {
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Conversation History">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Conversation History</h1>
