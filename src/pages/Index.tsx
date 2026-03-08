@@ -16,6 +16,7 @@ import StatusBadge from "@/components/dashboard/StatusBadge";
 import { useSpeechRecognition, SUPPORTED_LANGUAGES } from "@/hooks/useSpeechRecognition";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { playTTS } from "@/lib/tts";
 import type { AIState, TranscriptMessage } from "@/lib/mockData";
 
 const Index = () => {
