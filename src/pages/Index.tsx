@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Mic, PhoneOff, UserPlus, Timer, Globe, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
+import { useAuth } from "@/contexts/AuthContext";
   Select,
   SelectContent,
   SelectItem,
