@@ -1,25 +1,89 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Mic, PhoneOff, UserPlus, Timer } from "lucide-react";
+import { Mic, PhoneOff, UserPlus, Timer, Globe, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import AIAvatar from "@/components/voice/AIAvatar";
 import VoiceWaveform from "@/components/voice/VoiceWaveform";
 import StatusBadge from "@/components/dashboard/StatusBadge";
+import { useSpeechRecognition, SUPPORTED_LANGUAGES } from "@/hooks/useSpeechRecognition";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { AIState, TranscriptMessage } from "@/lib/mockData";
-
-const simulatedTranscript: Omit<TranscriptMessage, "id">[] = [
-  { speaker: "customer", text: "Hi, I need help with my account billing.", timestamp: "" },
-  { speaker: "ai", text: "Of course! I'd be happy to help with your billing. Could you tell me your account number?", timestamp: "" },
-  { speaker: "customer", text: "Sure, it's AC-2847391.", timestamp: "" },
-  { speaker: "ai", text: "Thank you! I can see your account. Your current balance is $47.99 due on March 15th. Would you like more details?", timestamp: "" },
-];
 
 const Index = () => {
   const [aiState, setAiState] = useState<AIState>("idle");
   const [callActive, setCallActive] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
-  const [msgIndex, setMsgIndex] = useState(0);
+  const [interimText, setInterimText] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
+  const [isSaving, setIsSaving] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const msgCountRef = useRef(0);
+
+  const { isListening, isSupported, start: startListening, stop: stopListening } =
+    useSpeechRecognition({
+      language: selectedLanguage,
+      continuous: true,
+      onResult: (text, isFinal) => {
+        if (isFinal) {
+          const ts = new Date().toLocaleTimeString();
+          const newMsg: TranscriptMessage = {
+            id: `m${msgCountRef.current++}`,
+            speaker: "customer",
+            text,
+            timestamp: ts,
+          };
+          setMessages((prev) => [...prev, newMsg]);
+          setInterimText("");
+          setAiState("processing");
+
+          // Simulate AI response after processing
+          setTimeout(() => {
+            setAiState("speaking");
+            setTimeout(() => {
+              const aiTs = new Date().toLocaleTimeString();
+              const aiMsg: TranscriptMessage = {
+                id: `m${msgCountRef.current++}`,
+                speaker: "ai",
+                text: getAIResponse(text),
+                timestamp: aiTs,
+              };
+              setMessages((prev) => [...prev, aiMsg]);
+              setAiState("listening");
+            }, 1500);
+          }, 1000);
+        } else {
+          setInterimText(text);
+          setAiState("listening");
+        }
+      },
+      onError: (error) => {
+        toast.error(`Speech recognition error: ${error}`);
+      },
+    });
+
+  // Simple simulated AI responses
+  function getAIResponse(input: string): string {
+    const lower = input.toLowerCase();
+    if (lower.includes("bill") || lower.includes("invoice") || lower.includes("charge")) {
+      return "I can help with your billing inquiry. Let me pull up your account details. Could you provide your account number?";
+    }
+    if (lower.includes("password") || lower.includes("login") || lower.includes("account")) {
+      return "I can assist with your account access. I'll send a verification code to your registered email to reset your password.";
+    }
+    if (lower.includes("cancel") || lower.includes("stop") || lower.includes("end")) {
+      return "I understand you'd like to discuss cancellation. Let me review your account options and any applicable fees.";
+    }
+    return "Thank you for that information. Could you provide more details so I can better assist you?";
+  }
 
   // Timer
   useEffect(() => {
@@ -28,73 +92,101 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [callActive]);
 
-  // State machine simulation
-  useEffect(() => {
-    if (!callActive || msgIndex >= simulatedTranscript.length) return;
-
-    const cycle = () => {
-      const msg = simulatedTranscript[msgIndex];
-      if (!msg) return;
-
-      if (msg.speaker === "customer") {
-        setAiState("listening");
-        setTimeout(() => {
-          const now = new Date();
-          const ts = now.toLocaleTimeString();
-          setMessages((prev) => [...prev, { ...msg, id: `m${msgIndex}`, timestamp: ts }]);
-          setAiState("processing");
-          setTimeout(() => {
-            setMsgIndex((i) => i + 1);
-          }, 1500);
-        }, 2500);
-      } else {
-        setAiState("speaking");
-        setTimeout(() => {
-          const now = new Date();
-          const ts = now.toLocaleTimeString();
-          setMessages((prev) => [...prev, { ...msg, id: `m${msgIndex}`, timestamp: ts }]);
-          setTimeout(() => {
-            setAiState("listening");
-            setMsgIndex((i) => i + 1);
-          }, 1000);
-        }, 2000);
-      }
-    };
-
-    const timeout = setTimeout(cycle, 1500);
-    return () => clearTimeout(timeout);
-  }, [callActive, msgIndex]);
-
   const formatTime = (s: number) =>
     `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
-  const handleMicClick = useCallback(() => {
+  const handleMicClick = useCallback(async () => {
     if (!callActive) {
+      if (!isSupported) {
+        toast.error("Speech recognition is not supported in this browser. Please use Chrome.");
+        return;
+      }
+
+      // Create conversation record
+      try {
+        const { data, error } = await supabase
+          .from("conversations")
+          .insert({ language: selectedLanguage, status: "active" })
+          .select("id")
+          .single();
+        if (error) throw error;
+        setConversationId(data.id);
+      } catch {
+        toast.error("Failed to create conversation record");
+      }
+
       setCallActive(true);
       setAiState("listening");
       setSeconds(0);
       setMessages([]);
-      setMsgIndex(0);
+      setInterimText("");
+      msgCountRef.current = 0;
+      startListening();
     }
-  }, [callActive]);
+  }, [callActive, isSupported, selectedLanguage, startListening]);
 
-  const handleEndCall = useCallback(() => {
+  const handleEndCall = useCallback(async () => {
+    stopListening();
     setCallActive(false);
     setAiState("idle");
+    setInterimText("");
+
+    // Save conversation
+    if (conversationId && messages.length > 0) {
+      setIsSaving(true);
+      try {
+        const transcript = messages.map((m) => ({
+          speaker: m.speaker,
+          text: m.text,
+          timestamp: m.timestamp,
+        }));
+        const { error } = await supabase
+          .from("conversations")
+          .update({
+            transcript,
+            duration_seconds: seconds,
+            status: "completed",
+          })
+          .eq("id", conversationId);
+        if (error) throw error;
+
+        // Auto-summarize
+        const { data, error: sumError } = await supabase.functions.invoke(
+          "summarize-conversation",
+          { body: { conversationId } }
+        );
+        if (sumError) console.error("Summary error:", sumError);
+        else toast.success("Conversation saved & summarized!");
+      } catch (e: any) {
+        toast.error("Failed to save conversation");
+        console.error(e);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+
     setSeconds(0);
     setMessages([]);
-    setMsgIndex(0);
-  }, []);
+    setConversationId(null);
+  }, [stopListening, conversationId, messages, seconds]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center relative px-4">
-      {/* Nav to dashboard */}
-      <Link
-        to="/dashboard"
-        className="absolute top-4 left-4 text-xs text-muted-foreground hover:text-primary transition-colors"
-      >
-        ← Agent Dashboard
-      </Link>
+      {/* Nav */}
+      <div className="absolute top-4 left-4 flex items-center gap-4">
+        <Link
+          to="/dashboard"
+          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+        >
+          ← Agent Dashboard
+        </Link>
+        <Link
+          to="/conversations"
+          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+        >
+          📝 Conversation History
+        </Link>
+      </div>
 
       {/* Timer */}
       {callActive && (
@@ -114,6 +206,25 @@ const Index = () => {
         {/* Status */}
         <StatusBadge status={aiState} />
 
+        {/* Language selector */}
+        {!callActive && (
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+              <SelectTrigger className="w-48 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.code} value={lang.code} className="text-xs">
+                    {lang.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Processing dots */}
         {aiState === "processing" && (
           <div className="flex gap-1.5">
@@ -131,24 +242,39 @@ const Index = () => {
           {callActive && (
             <>
               <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse-ring" />
-              <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse-ring" style={{ animationDelay: "0.5s" }} />
+              <div
+                className="absolute inset-0 rounded-full bg-primary/10 animate-pulse-ring"
+                style={{ animationDelay: "0.5s" }}
+              />
             </>
           )}
           <button
             onClick={handleMicClick}
+            disabled={callActive}
             className={`relative z-10 h-20 w-20 rounded-full flex items-center justify-center transition-all duration-300 ${
               callActive
                 ? "bg-primary shadow-[0_0_30px_hsl(217,91%,60%,0.4)]"
                 : "bg-card border-2 border-border hover:border-primary hover:shadow-[0_0_20px_hsl(217,91%,60%,0.2)]"
             }`}
           >
-            <Mic className={`h-8 w-8 ${callActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
+            <Mic
+              className={`h-8 w-8 ${callActive ? "text-primary-foreground" : "text-muted-foreground"}`}
+            />
           </button>
         </div>
 
         <p className="text-xs text-muted-foreground">
-          {callActive ? "AI is active — speak naturally" : "Tap the microphone to start"}
+          {callActive
+            ? `Listening in ${SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.label || selectedLanguage} — speak naturally`
+            : "Select your language and tap the microphone to start"}
         </p>
+
+        {/* Interim text */}
+        {interimText && (
+          <div className="w-full rounded-lg bg-card/50 border border-border/30 p-3 animate-fade-in">
+            <p className="text-sm text-muted-foreground italic">🎙️ {interimText}...</p>
+          </div>
+        )}
 
         {/* Transcript */}
         {messages.length > 0 && (
@@ -156,7 +282,11 @@ const Index = () => {
             {messages.map((msg) => (
               <div key={msg.id} className="animate-fade-in">
                 <div className="flex items-baseline gap-2">
-                  <span className={`text-[10px] font-bold ${msg.speaker === "ai" ? "text-primary" : "text-muted-foreground"}`}>
+                  <span
+                    className={`text-[10px] font-bold ${
+                      msg.speaker === "ai" ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
                     {msg.speaker === "ai" ? "AI" : "You"}
                   </span>
                   <span className="text-[10px] text-muted-foreground">{msg.timestamp}</span>
@@ -170,9 +300,13 @@ const Index = () => {
         {/* Action buttons */}
         {callActive && (
           <div className="flex gap-3 animate-fade-in">
-            <Button variant="destructive" onClick={handleEndCall} className="gap-2">
-              <PhoneOff className="h-4 w-4" />
-              End Call
+            <Button variant="destructive" onClick={handleEndCall} disabled={isSaving} className="gap-2">
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <PhoneOff className="h-4 w-4" />
+              )}
+              {isSaving ? "Saving..." : "End Call"}
             </Button>
             <Button variant="outline" className="gap-2">
               <UserPlus className="h-4 w-4" />

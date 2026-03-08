@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import SystemStatus from "./pages/SystemStatus";
+import ConversationHistory from "./pages/ConversationHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/admin" element={<Admin />} />
           <Route path="/knowledge-base" element={<KnowledgeBase />} />
           <Route path="/system-status" element={<SystemStatus />} />
+          <Route path="/conversations" element={<ConversationHistory />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
