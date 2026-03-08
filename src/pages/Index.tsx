@@ -48,21 +48,27 @@ const Index = () => {
           setInterimText("");
           setAiState("processing");
 
-          // Simulate AI response after processing
-          setTimeout(() => {
+          // Generate AI response and speak it
+          const responseText = getAIResponse(text);
+          setTimeout(async () => {
             setAiState("speaking");
-            setTimeout(() => {
-              const aiTs = new Date().toLocaleTimeString();
-              const aiMsg: TranscriptMessage = {
-                id: `m${msgCountRef.current++}`,
-                speaker: "ai",
-                text: getAIResponse(text),
-                timestamp: aiTs,
-              };
-              setMessages((prev) => [...prev, aiMsg]);
-              setAiState("listening");
-            }, 1500);
-          }, 1000);
+            const aiTs = new Date().toLocaleTimeString();
+            const aiMsg: TranscriptMessage = {
+              id: `m${msgCountRef.current++}`,
+              speaker: "ai",
+              text: responseText,
+              timestamp: aiTs,
+            };
+            setMessages((prev) => [...prev, aiMsg]);
+
+            // Play TTS audio
+            try {
+              await playTTS(responseText);
+            } catch (e) {
+              console.error("TTS playback failed:", e);
+            }
+            setAiState("listening");
+          }, 800);
         } else {
           setInterimText(text);
           setAiState("listening");
