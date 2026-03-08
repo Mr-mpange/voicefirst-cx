@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Mic, PhoneOff, UserPlus, Timer, Globe, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Select,
   SelectContent,
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 import type { AIState, TranscriptMessage } from "@/lib/mockData";
 
 const Index = () => {
+  const { user } = useAuth();
   const [aiState, setAiState] = useState<AIState>("idle");
   const [callActive, setCallActive] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -106,7 +108,7 @@ const Index = () => {
       try {
         const { data, error } = await supabase
           .from("conversations")
-          .insert({ language: selectedLanguage, status: "active" })
+          .insert({ language: selectedLanguage, status: "active", user_id: user?.id })
           .select("id")
           .single();
         if (error) throw error;
