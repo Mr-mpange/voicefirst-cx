@@ -30,7 +30,7 @@ const ConversationHistory = () => {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Conversation[];
+      return data as unknown as Conversation[];
     },
   });
 
