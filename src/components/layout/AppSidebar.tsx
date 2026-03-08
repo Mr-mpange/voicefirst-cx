@@ -79,12 +79,18 @@ export function AppSidebar() {
       <SidebarFooter>
         <div className="flex items-center gap-2 px-2 py-2">
           <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-            JD
+            {initials}
           </div>
           {!collapsed && (
-            <div className="text-xs">
-              <p className="font-medium text-foreground">John Doe</p>
-              <p className="text-muted-foreground">Agent</p>
+            <div className="flex-1 text-xs">
+              <p className="font-medium text-foreground truncate">{user?.email}</p>
+              <button
+                onClick={signOut}
+                className="text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 mt-0.5"
+              >
+                <LogOut className="h-3 w-3" />
+                Sign out
+              </button>
             </div>
           )}
         </div>
