@@ -153,6 +153,28 @@ const ConversationHistory = () => {
                       Generate AI Summary
                     </Button>
                   )}
+
+                  {/* Export buttons */}
+                  <div className="flex gap-2 pt-2 border-t border-border/30">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 text-xs"
+                      onClick={() => exportAsText(conv)}
+                    >
+                      <Download className="h-3 w-3" />
+                      Export TXT
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 text-xs"
+                      onClick={() => exportAsPDF(conv)}
+                    >
+                      <FileText className="h-3 w-3" />
+                      Export PDF
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
