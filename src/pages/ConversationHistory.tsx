@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, Clock, Globe, FileText, Loader2 } from "lucide-react";
+import { MessageSquare, Clock, Globe, FileText, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
+import { exportAsText, exportAsPDF } from "@/lib/exportConversation";
 
 interface Conversation {
   id: string;
