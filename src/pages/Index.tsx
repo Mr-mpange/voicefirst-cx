@@ -180,14 +180,20 @@ const Index = () => {
       }
 
       setCallActive(true);
-      setAiState("listening");
       setSeconds(0);
       setMessages([]);
       setInterimText("");
       msgCountRef.current = 0;
+      conversationStepRef.current = 0;
+      matchedTopicRef.current = null;
+
+      // AI greets first, THEN starts listening
+      const greeting = AI_FLOW[0].text;
+      conversationStepRef.current = 1;
+      await aiSpeak(greeting);
       startListening();
     }
-  }, [callActive, isSupported, selectedLanguage, startListening]);
+  }, [callActive, isSupported, selectedLanguage, startListening, aiSpeak]);
 
   const handleEndCall = useCallback(async () => {
     stopListening();
