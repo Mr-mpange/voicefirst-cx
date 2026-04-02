@@ -149,22 +149,21 @@ const Index = () => {
     }
 
     // Try to match a topic from user input
-    for (const flow of AI_FLOW) {
-      if ("trigger" in flow && flow.trigger) {
-        if (flow.trigger.some((t) => lower.includes(t))) {
-          matchedTopicRef.current = flow;
-          conversationStepRef.current = 2;
-          return flow.text;
-        }
+    const flow = getFlowForLanguage(selectedLanguage);
+    for (const topic of flow.topics) {
+      if (topic.trigger.some((t) => lower.includes(t))) {
+        matchedTopicRef.current = topic;
+        conversationStepRef.current = 2;
+        return topic.text;
       }
     }
 
-    // Generic follow-up if no topic matched
+    // Generic follow-up
     conversationStepRef.current++;
     if (step <= 1) {
-      return "I didn't quite catch the topic. Could you tell me if this is about billing, account access, technical support, or another issue? I'm here to help.";
+      return flow.fallback;
     }
-    return "Thank you for that information. Let me look into this for you. Is there anything specific you'd like me to check?";
+    return flow.fallbackDeep;
   }
 
   const { isListening, isSupported, start: startListening, stop: stopListening } =
