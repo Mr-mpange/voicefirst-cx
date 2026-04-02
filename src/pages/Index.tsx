@@ -234,8 +234,9 @@ const Index = () => {
       conversationStepRef.current = 0;
       matchedTopicRef.current = null;
 
-      // AI greets first, THEN starts listening
-      const greeting = AI_FLOW[0].text;
+      // AI greets first in the selected language, THEN starts listening
+      const flow = getFlowForLanguage(selectedLanguage);
+      const greeting = flow.greeting;
       conversationStepRef.current = 1;
       await aiSpeak(greeting);
       startListening();
