@@ -107,7 +107,7 @@ const Index = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const msgCountRef = useRef(0);
   const conversationStepRef = useRef(0); // tracks which flow step we're on
-  const matchedTopicRef = useRef<typeof AI_FLOW[number] | null>(null);
+  const matchedTopicRef = useRef<{ trigger: string[]; text: string; followUp: string } | null>(null);
   const isSpeakingRef = useRef(false);
 
   // AI speaks a message, then starts listening
