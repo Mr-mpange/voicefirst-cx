@@ -19,6 +19,34 @@ import { toast } from "sonner";
 import { playTTS } from "@/lib/tts";
 import type { AIState, TranscriptMessage } from "@/lib/mockData";
 
+// Conversation flow steps the AI drives
+const AI_FLOW = [
+  {
+    greeting: true,
+    text: "Hello! Thank you for calling our support line. My name is Alex, your AI assistant. How can I help you today? Are you calling about billing, account access, technical support, or something else?",
+  },
+  {
+    trigger: ["bill", "invoice", "charge", "payment", "price"],
+    text: "I understand you have a billing concern. Let me pull up your account. Could you please provide me with your account number or the email address associated with your account?",
+    followUp: "Thank you. I can see your recent charges. The last transaction was on March 28th for $49.99. Would you like me to explain this charge, issue a refund, or help with something else on your bill?",
+  },
+  {
+    trigger: ["password", "login", "account", "access", "sign in", "locked"],
+    text: "I can help you with account access. For security purposes, I'll need to verify your identity. Could you please confirm the email address registered to your account?",
+    followUp: "Thank you for confirming. I'm sending a password reset link to your email now. You should receive it within 2 minutes. Is there anything else I can help you with?",
+  },
+  {
+    trigger: ["cancel", "stop", "end", "unsubscribe", "close"],
+    text: "I understand you're considering cancellation. Before we proceed, may I ask what's prompting this decision? I'd like to see if there's anything we can do to improve your experience.",
+    followUp: "I appreciate you sharing that. I have a few options that might work better for you. Would you like to hear about our alternative plans, or would you prefer to proceed with the cancellation?",
+  },
+  {
+    trigger: ["technical", "bug", "error", "broken", "not working", "issue", "problem"],
+    text: "I'm sorry you're experiencing technical difficulties. Could you describe what's happening? For example, are you seeing an error message, or is a feature not working as expected?",
+    followUp: "Thank you for explaining. Let me check our systems. I can see there was a known issue reported earlier. Let me walk you through a fix. First, could you try clearing your browser cache and refreshing the page?",
+  },
+];
+
 const Index = () => {
   const { user } = useAuth();
   const [aiState, setAiState] = useState<AIState>("idle");
@@ -30,13 +58,73 @@ const Index = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const msgCountRef = useRef(0);
+  const conversationStepRef = useRef(0); // tracks which flow step we're on
+  const matchedTopicRef = useRef<typeof AI_FLOW[number] | null>(null);
+  const isSpeakingRef = useRef(false);
+
+  // AI speaks a message, then starts listening
+  const aiSpeak = useCallback(async (text: string) => {
+    if (isSpeakingRef.current) return;
+    isSpeakingRef.current = true;
+    setAiState("speaking");
+    const aiTs = new Date().toLocaleTimeString();
+    const aiMsg: TranscriptMessage = {
+      id: `m${msgCountRef.current++}`,
+      speaker: "ai",
+      text,
+      timestamp: aiTs,
+    };
+    setMessages((prev) => [...prev, aiMsg]);
+
+    try {
+      await playTTS(text);
+    } catch (e) {
+      console.error("TTS playback failed:", e);
+    }
+    isSpeakingRef.current = false;
+    setAiState("listening");
+  }, []);
+
+  // Determine AI response based on conversation context
+  function getAIResponse(input: string): string {
+    const lower = input.toLowerCase();
+    const step = conversationStepRef.current;
+
+    // If we already matched a topic and this is a follow-up
+    if (matchedTopicRef.current && step >= 2) {
+      if (matchedTopicRef.current.followUp) {
+        const followUp = matchedTopicRef.current.followUp;
+        matchedTopicRef.current = null; // reset after using follow-up
+        conversationStepRef.current++;
+        return followUp;
+      }
+    }
+
+    // Try to match a topic from user input
+    for (const flow of AI_FLOW) {
+      if ("trigger" in flow && flow.trigger) {
+        if (flow.trigger.some((t) => lower.includes(t))) {
+          matchedTopicRef.current = flow;
+          conversationStepRef.current = 2;
+          return flow.text;
+        }
+      }
+    }
+
+    // Generic follow-up if no topic matched
+    conversationStepRef.current++;
+    if (step <= 1) {
+      return "I didn't quite catch the topic. Could you tell me if this is about billing, account access, technical support, or another issue? I'm here to help.";
+    }
+    return "Thank you for that information. Let me look into this for you. Is there anything specific you'd like me to check?";
+  }
 
   const { isListening, isSupported, start: startListening, stop: stopListening } =
     useSpeechRecognition({
       language: selectedLanguage,
       continuous: true,
       onResult: (text, isFinal) => {
-        if (isFinal) {
+        if (isFinal && !isSpeakingRef.current) {
           const ts = new Date().toLocaleTimeString();
           const newMsg: TranscriptMessage = {
             id: `m${msgCountRef.current++}`,
@@ -48,51 +136,18 @@ const Index = () => {
           setInterimText("");
           setAiState("processing");
 
-          // Generate AI response and speak it
           const responseText = getAIResponse(text);
-          setTimeout(async () => {
-            setAiState("speaking");
-            const aiTs = new Date().toLocaleTimeString();
-            const aiMsg: TranscriptMessage = {
-              id: `m${msgCountRef.current++}`,
-              speaker: "ai",
-              text: responseText,
-              timestamp: aiTs,
-            };
-            setMessages((prev) => [...prev, aiMsg]);
-
-            // Play TTS audio
-            try {
-              await playTTS(responseText);
-            } catch (e) {
-              console.error("TTS playback failed:", e);
-            }
-            setAiState("listening");
-          }, 800);
-        } else {
+          setTimeout(() => {
+            aiSpeak(responseText);
+          }, 600);
+        } else if (!isFinal) {
           setInterimText(text);
-          setAiState("listening");
         }
       },
       onError: (error) => {
         toast.error(`Speech recognition error: ${error}`);
       },
     });
-
-  // Simple simulated AI responses
-  function getAIResponse(input: string): string {
-    const lower = input.toLowerCase();
-    if (lower.includes("bill") || lower.includes("invoice") || lower.includes("charge")) {
-      return "I can help with your billing inquiry. Let me pull up your account details. Could you provide your account number?";
-    }
-    if (lower.includes("password") || lower.includes("login") || lower.includes("account")) {
-      return "I can assist with your account access. I'll send a verification code to your registered email to reset your password.";
-    }
-    if (lower.includes("cancel") || lower.includes("stop") || lower.includes("end")) {
-      return "I understand you'd like to discuss cancellation. Let me review your account options and any applicable fees.";
-    }
-    return "Thank you for that information. Could you provide more details so I can better assist you?";
-  }
 
   // Timer
   useEffect(() => {
