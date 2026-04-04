@@ -96,39 +96,6 @@ const Index = () => {
     setAiState("listening");
   }, [selectedLanguage]);
 
-  // Determine AI response based on conversation context
-  function getAIResponse(input: string): string {
-    const lower = input.toLowerCase();
-    const step = conversationStepRef.current;
-
-    // If we already matched a topic and this is a follow-up
-    if (matchedTopicRef.current && step >= 2) {
-      if (matchedTopicRef.current.followUp) {
-        const followUp = matchedTopicRef.current.followUp;
-        matchedTopicRef.current = null; // reset after using follow-up
-        conversationStepRef.current++;
-        return followUp;
-      }
-    }
-
-    // Try to match a topic from user input
-    const flow = getFlowForLanguage(selectedLanguage);
-    for (const topic of flow.topics) {
-      if (topic.trigger.some((t) => lower.includes(t))) {
-        matchedTopicRef.current = topic;
-        conversationStepRef.current = 2;
-        return topic.text;
-      }
-    }
-
-    // Generic follow-up
-    conversationStepRef.current++;
-    if (step <= 1) {
-      return flow.fallback;
-    }
-    return flow.fallbackDeep;
-  }
-
   const { isListening, isSupported, start: startListening, stop: stopListening } =
     useSpeechRecognition({
       language: selectedLanguage,
