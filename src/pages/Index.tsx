@@ -125,13 +125,13 @@ const Index = () => {
     setMessages((prev) => [...prev, aiMsg]);
 
     try {
-      await playTTS(text);
+      await playTTS(text, selectedLanguage);
     } catch (e) {
       console.error("TTS playback failed:", e);
     }
     isSpeakingRef.current = false;
     setAiState("listening");
-  }, []);
+  }, [selectedLanguage]);
 
   // Determine AI response based on conversation context
   function getAIResponse(input: string): string {
