@@ -1,106 +1,118 @@
-import { useState, useEffect } from "react";
-import { Zap, Cpu, Users, Globe, Clock } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Zap, Cpu, Users, Globe, Clock, RefreshCw, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import MetricCard from "@/components/dashboard/MetricCard";
 import StatusBadge from "@/components/dashboard/StatusBadge";
 import { Card } from "@/components/ui/card";
-import { sparklineData, type SystemHealth } from "@/lib/mockData";
+import { Button } from "@/components/ui/button";
+import { type SystemHealth } from "@/lib/mockData";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-interface SystemMetric {
-  icon: typeof Zap;
-  label: string;
-  value: string;
+interface ServiceResult {
+  name: string;
   status: SystemHealth;
-  sparkline: { value: number }[];
+  latencyMs: number;
+  detail?: string;
 }
 
-const initialMetrics: SystemMetric[] = [
-  { icon: Zap, label: "Voice Processing Latency", value: "23ms", status: "healthy", sparkline: sparklineData(23, 10) },
-  { icon: Cpu, label: "AI Server Load", value: "67%", status: "healthy", sparkline: sparklineData(67, 15) },
-  { icon: Users, label: "Active Users", value: "1,247", status: "healthy", sparkline: sparklineData(1247, 200) },
-  { icon: Globe, label: "API Usage", value: "84%", status: "warning", sparkline: sparklineData(84, 8) },
-  { icon: Clock, label: "System Uptime", value: "99.97%", status: "healthy", sparkline: sparklineData(9997, 3) },
-];
+interface HealthPayload {
+  overall: SystemHealth;
+  services: ServiceResult[];
+  checkedAt: string;
+}
+
+const statusIcon = (s: SystemHealth) => {
+  if (s === "healthy") return <CheckCircle2 className="h-4 w-4 text-success" />;
+  if (s === "warning") return <AlertTriangle className="h-4 w-4 text-warning" />;
+  return <XCircle className="h-4 w-4 text-destructive" />;
+};
+
+const overallLabel: Record<SystemHealth, string> = {
+  healthy: "All Systems Operational",
+  warning: "Some Services Degraded",
+  critical: "System Issues Detected",
+};
 
 const SystemStatus = () => {
-  const [metrics, setMetrics] = useState(initialMetrics);
+  const [health, setHealth] = useState<HealthPayload | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics((prev) =>
-        prev.map((m) => ({
-          ...m,
-          sparkline: [...m.sparkline.slice(1), { value: m.sparkline[0].value + Math.floor(Math.random() * 6 - 3) }],
-        }))
-      );
-    }, 3000);
-    return () => clearInterval(interval);
+  const fetchHealth = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("health-check");
+      if (error) throw error;
+      setHealth(data as HealthPayload);
+    } catch (e: any) {
+      console.error("Health check failed:", e);
+      toast.error("Failed to fetch system health");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchHealth();
+    const interval = setInterval(fetchHealth, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchHealth]);
 
   return (
     <DashboardLayout title="System Status">
       {/* Overall status */}
-      <Card className="p-4 border-border/50 mb-6 flex items-center gap-3">
-        <div className="h-3 w-3 rounded-full bg-success animate-pulse" />
-        <span className="text-sm font-medium text-foreground">All Systems Operational</span>
-        <span className="text-xs text-muted-foreground ml-auto">Last checked: just now</span>
+      <Card className="p-4 border-border/50 mb-6 flex items-center gap-3 flex-wrap">
+        {health ? (
+          <>
+            {statusIcon(health.overall)}
+            <span className="text-sm font-medium text-foreground">{overallLabel[health.overall]}</span>
+            <span className="text-xs text-muted-foreground ml-auto hidden sm:inline">
+              Last checked: {new Date(health.checkedAt).toLocaleTimeString()}
+            </span>
+          </>
+        ) : (
+          <span className="text-sm text-muted-foreground">{loading ? "Checking services…" : "Unable to fetch health"}</span>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="ml-2"
+          onClick={fetchHealth}
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+        </Button>
       </Card>
-
-      {/* Metric cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
-        {metrics.map((m, i) => (
-          <Card key={i} className="p-4 border-border/50">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <m.icon className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{m.label}</p>
-                  <p className="text-xl font-bold text-foreground">{m.value}</p>
-                </div>
-              </div>
-              <StatusBadge status={m.status} />
-            </div>
-            <div className="h-12">
-              <div className="flex items-end justify-between h-full gap-0.5">
-                {m.sparkline.map((d, j) => (
-                  <div
-                    key={j}
-                    className="flex-1 bg-primary/30 rounded-t transition-all duration-500"
-                    style={{
-                      height: `${Math.max(10, ((d.value - Math.min(...m.sparkline.map((s) => s.value))) / (Math.max(...m.sparkline.map((s) => s.value)) - Math.min(...m.sparkline.map((s) => s.value)) || 1)) * 100)}%`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
 
       {/* Service list */}
       <Card className="border-border/50">
         <div className="p-4 border-b border-border/50">
           <h3 className="text-sm font-semibold text-foreground">Service Health</h3>
         </div>
-        {[
-          { name: "Voice Recognition Engine", status: "healthy" as SystemHealth, uptime: "99.99%" },
-          { name: "Natural Language Processor", status: "healthy" as SystemHealth, uptime: "99.98%" },
-          { name: "Text-to-Speech Service", status: "healthy" as SystemHealth, uptime: "99.97%" },
-          { name: "Call Routing Engine", status: "healthy" as SystemHealth, uptime: "99.95%" },
-          { name: "Analytics Pipeline", status: "warning" as SystemHealth, uptime: "99.82%" },
-          { name: "Knowledge Base Index", status: "healthy" as SystemHealth, uptime: "99.99%" },
-        ].map((service, i) => (
-          <div key={i} className="flex items-center justify-between px-4 py-3 border-b border-border/30 last:border-0">
-            <span className="text-sm text-foreground">{service.name}</span>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground font-mono">{service.uptime}</span>
-              <StatusBadge status={service.status} />
+        {loading && !health ? (
+          <div className="p-8 text-center text-sm text-muted-foreground">Loading…</div>
+        ) : health ? (
+          health.services.map((service, i) => (
+            <div key={i} className="flex items-center justify-between px-4 py-3 border-b border-border/30 last:border-0 gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                {statusIcon(service.status)}
+                <span className="text-sm text-foreground truncate">{service.name}</span>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                {service.latencyMs > 0 && (
+                  <span className="text-xs text-muted-foreground font-mono">{service.latencyMs}ms</span>
+                )}
+                {service.detail && (
+                  <span className="text-xs text-muted-foreground max-w-[200px] truncate hidden md:inline" title={service.detail}>
+                    {service.detail}
+                  </span>
+                )}
+                <StatusBadge status={service.status} />
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <div className="p-8 text-center text-sm text-muted-foreground">Unable to load service health</div>
+        )}
       </Card>
     </DashboardLayout>
   );
