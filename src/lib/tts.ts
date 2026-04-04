@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
 /** Browser-based SpeechSynthesis fallback */
@@ -7,6 +9,9 @@ function playBrowserTTS(text: string): Promise<void> {
       reject(new Error("SpeechSynthesis not supported"));
       return;
     }
+
+    window.speechSynthesis.cancel();
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 1;
     utterance.pitch = 1;
@@ -19,21 +24,42 @@ function playBrowserTTS(text: string): Promise<void> {
 export async function playTTS(text: string): Promise<void> {
   // Try ElevenLabs first, fall back to browser TTS
   try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     const response = await fetch(TTS_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
       body: JSON.stringify({ text }),
     });
 
+    const contentType = response.headers.get("Content-Type") ?? "";
+
     if (!response.ok) {
-      throw new Error(`TTS request failed: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(errorText || `TTS request failed: ${response.status}`);
+    }
+
+    if (!contentType.includes("audio/")) {
+      const payload = await response.json().catch(() => null);
+      const reason =
+        payload && typeof payload === "object" && "reason" in payload
+          ? String((payload as { reason?: unknown }).reason ?? "TTS audio unavailable")
+          : "TTS audio unavailable";
+      throw new Error(reason);
     }
 
     const audioBlob = await response.blob();
+
+    if (!audioBlob.size) {
+      throw new Error("TTS audio response was empty");
+    }
+
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
 
@@ -49,7 +75,7 @@ export async function playTTS(text: string): Promise<void> {
       audio.play().catch(reject);
     });
   } catch (e) {
-    console.warn("ElevenLabs TTS failed, using browser fallback:", e);
+    console.warn("Hosted TTS unavailable, using browser fallback:", e);
     try {
       await playBrowserTTS(text);
     } catch (fallbackErr) {
