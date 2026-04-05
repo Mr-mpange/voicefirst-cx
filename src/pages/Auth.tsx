@@ -51,17 +51,22 @@ const Auth = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    const { error } = await lovable.auth.signInWithOAuth("google", {
+    const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
-    if (error) toast.error("Google sign-in failed");
+    if (result.error) toast.error("Google sign-in failed");
+    if (result.redirected) return;
+    // If tokens received directly, navigate
+    navigate("/", { replace: true });
   };
 
   const handleAppleSignIn = async () => {
-    const { error } = await lovable.auth.signInWithOAuth("apple", {
+    const result = await lovable.auth.signInWithOAuth("apple", {
       redirect_uri: window.location.origin,
     });
-    if (error) toast.error("Apple sign-in failed");
+    if (result.error) toast.error("Apple sign-in failed");
+    if (result.redirected) return;
+    navigate("/", { replace: true });
   };
 
   const handleForgotPassword = async () => {
