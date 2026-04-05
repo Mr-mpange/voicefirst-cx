@@ -38,12 +38,20 @@ function playBrowserTTS(text: string, lang?: string): Promise<void> {
 
       // Set language so the browser picks the right voice
       if (lang) {
-        utterance.lang = lang;
-        // Try to find a matching voice
         const exact = voices.find((v) => v.lang === lang);
         const base = voices.find((v) => v.lang.startsWith(lang.split("-")[0]));
-        if (exact) utterance.voice = exact;
-        else if (base) utterance.voice = base;
+        if (exact) {
+          utterance.voice = exact;
+          utterance.lang = lang;
+        } else if (base) {
+          utterance.voice = base;
+          utterance.lang = base.lang;
+        } else {
+          // No voice for this language — use default voice so user hears something
+          console.warn(`No browser TTS voice for ${lang}, using default voice`);
+          const defaultVoice = voices.find((v) => v.default) || voices[0];
+          if (defaultVoice) utterance.voice = defaultVoice;
+        }
       }
 
       utterance.onend = () => resolve();
