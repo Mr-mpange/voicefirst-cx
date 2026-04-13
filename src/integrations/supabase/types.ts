@@ -50,6 +50,45 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_entries: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          extracted_text: string | null
+          id: string
+          source_file_name: string | null
+          source_file_path: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          content?: string
+          created_at?: string
+          extracted_text?: string | null
+          id?: string
+          source_file_name?: string | null
+          source_file_path?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          extracted_text?: string | null
+          id?: string
+          source_file_name?: string | null
+          source_file_path?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

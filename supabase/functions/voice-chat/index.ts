@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,6 +23,33 @@ serve(async (req) => {
       );
     }
 
+    // Fetch knowledge base entries to give AI business context
+    let knowledgeContext = "";
+    try {
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+        const token = authHeader.replace("Bearer ", "");
+        const userClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: `Bearer ${token}` } },
+        });
+        const { data: kbEntries } = await userClient
+          .from("knowledge_entries")
+          .select("title, category, content")
+          .limit(20);
+
+        if (kbEntries && kbEntries.length > 0) {
+          knowledgeContext = "\n\nKNOWLEDGE BASE — Use this information to answer customer questions accurately:\n" +
+            kbEntries
+              .map((e: any) => `[${e.category}] ${e.title}: ${e.content?.slice(0, 500)}`)
+              .join("\n\n");
+        }
+      }
+    } catch (e) {
+      console.error("KB fetch failed (non-fatal):", e);
+    }
+
     const langName = language || "English";
 
     const systemPrompt = `You are Alex, a professional AI customer support assistant for a company.
@@ -36,6 +64,8 @@ RULES:
 - Never make up specific account details, prices, or order numbers.
 - If you don't know something, say you'll transfer to a specialist.
 - Drive the conversation proactively — ask follow-up questions, don't just answer and wait.
+- When answering, USE the knowledge base information below if relevant to the customer's question.
+${knowledgeContext}
 
 ${type === "greeting" ? "Generate a warm greeting. Introduce yourself as Alex, the AI assistant. Ask how you can help today, mentioning billing, account access, technical support as examples." : "Continue the conversation naturally based on the chat history."}`;
 
