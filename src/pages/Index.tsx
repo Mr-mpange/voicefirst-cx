@@ -228,7 +228,7 @@ const Index = () => {
           to="/conversations"
           className="text-xs text-muted-foreground hover:text-primary transition-colors"
         >
-          📝 Conversation History
+          Conversation History
         </Link>
       </div>
 

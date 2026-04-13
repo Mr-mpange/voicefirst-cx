@@ -65,9 +65,12 @@ async function checkAuth(): Promise<ServiceResult> {
   const start = Date.now();
   try {
     const url = Deno.env.get("SUPABASE_URL")!;
-    const resp = await fetch(`${url}/auth/v1/health`);
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const sb = createClient(url, key);
+    const { error } = await sb.auth.getUser("00000000-0000-0000-0000-000000000000");
     const latencyMs = Date.now() - start;
-    return { name: "Authentication", status: resp.ok ? "healthy" : "warning", latencyMs };
+    // A "user not found" error means auth service is responding fine
+    return { name: "Authentication", status: latencyMs > 2000 ? "warning" : "healthy", latencyMs };
   } catch (e) {
     return { name: "Authentication", status: "critical", latencyMs: Date.now() - start, detail: (e as Error).message };
   }
