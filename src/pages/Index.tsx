@@ -307,11 +307,17 @@ const Index = () => {
           </button>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          {callActive
-            ? `Listening in ${SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.label || selectedLanguage} — speak naturally`
-            : "Select your language and tap the microphone to start"}
-        </p>
+        {!callActive && (
+          <div className="text-center">
+            <p className="text-sm font-medium text-foreground">Hi, I'm Alex</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Pick your language and tap the mic to chat</p>
+          </div>
+        )}
+        {callActive && (
+          <p className="text-xs text-muted-foreground">
+            Speaking {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.label || selectedLanguage} — just talk naturally
+          </p>
+        )}
 
         {/* Interim text */}
         {interimText && (
@@ -331,7 +337,7 @@ const Index = () => {
                       msg.speaker === "ai" ? "text-primary" : "text-muted-foreground"
                     }`}
                   >
-                    {msg.speaker === "ai" ? "AI" : "You"}
+                    {msg.speaker === "ai" ? "Alex" : "You"}
                   </span>
                   <span className="text-[10px] text-muted-foreground">{msg.timestamp}</span>
                 </div>

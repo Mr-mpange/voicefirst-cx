@@ -1,5 +1,5 @@
-import { Bot } from "lucide-react";
 import type { AIState } from "@/lib/mockData";
+import alexAvatar from "@/assets/alex-avatar.jpg";
 
 interface AIAvatarProps {
   state: AIState;
@@ -21,8 +21,7 @@ const stateGlow: Record<AIState, string> = {
 };
 
 const AIAvatar = ({ state, size = "lg" }: AIAvatarProps) => {
-  const dim = size === "lg" ? "h-20 w-20" : "h-10 w-10";
-  const iconSize = size === "lg" ? "h-10 w-10" : "h-5 w-5";
+  const dim = size === "lg" ? "h-24 w-24" : "h-10 w-10";
 
   return (
     <div className="relative flex items-center justify-center">
@@ -32,10 +31,17 @@ const AIAvatar = ({ state, size = "lg" }: AIAvatarProps) => {
         />
       )}
       <div
-        className={`${dim} rounded-full border-2 ${stateColors[state]} ${stateGlow[state]} bg-card flex items-center justify-center transition-all duration-300`}
+        className={`${dim} rounded-full border-2 ${stateColors[state]} ${stateGlow[state]} overflow-hidden transition-all duration-300`}
       >
-        <Bot className={`${iconSize} text-primary`} />
+        <img
+          src={alexAvatar}
+          alt="Alex — your support agent"
+          className="h-full w-full object-cover"
+        />
       </div>
+      {state !== "idle" && (
+        <span className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full bg-success border-2 border-background" />
+      )}
     </div>
   );
 };
