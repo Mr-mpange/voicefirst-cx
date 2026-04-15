@@ -55,6 +55,8 @@ interface UseSpeechRecognitionOptions {
   onResult?: (text: string, isFinal: boolean) => void;
   onError?: (error: string) => void;
   continuous?: boolean;
+  /** Auto-finalize interim results after this many ms of silence (default 2000) */
+  silenceTimeout?: number;
 }
 
 // Extend Window for SpeechRecognition
