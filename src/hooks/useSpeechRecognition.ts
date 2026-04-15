@@ -55,6 +55,8 @@ interface UseSpeechRecognitionOptions {
   onResult?: (text: string, isFinal: boolean) => void;
   onError?: (error: string) => void;
   continuous?: boolean;
+  /** Auto-finalize interim results after this many ms of silence (default 2000) */
+  silenceTimeout?: number;
 }
 
 // Extend Window for SpeechRecognition
@@ -68,10 +70,19 @@ export function useSpeechRecognition({
   onResult,
   onError,
   continuous = true,
+  silenceTimeout = 2000,
 }: UseSpeechRecognitionOptions = {}) {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastInterimRef = useRef<string>("");
+
+  // Store callbacks in refs to avoid re-creating recognition on every render
+  const onResultRef = useRef(onResult);
+  const onErrorRef = useRef(onError);
+  useEffect(() => { onResultRef.current = onResult; }, [onResult]);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -79,12 +90,19 @@ export function useSpeechRecognition({
     setIsSupported(!!SpeechRecognition);
   }, []);
 
+  const clearSilenceTimer = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+  }, []);
+
   const start = useCallback(() => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      onError?.("Speech recognition not supported in this browser. Please use Chrome.");
+      onErrorRef.current?.("Speech recognition not supported in this browser. Please use Chrome.");
       return;
     }
 
@@ -114,16 +132,29 @@ export function useSpeechRecognition({
       }
 
       if (finalText) {
-        onResult?.(finalText.trim(), true);
+        clearSilenceTimer();
+        lastInterimRef.current = "";
+        onResultRef.current?.(finalText.trim(), true);
       } else if (interimText) {
-        onResult?.(interimText.trim(), false);
+        lastInterimRef.current = interimText.trim();
+        onResultRef.current?.(interimText.trim(), false);
+
+        // Auto-finalize: if no new results come within silenceTimeout, treat as final
+        clearSilenceTimer();
+        silenceTimerRef.current = setTimeout(() => {
+          const text = lastInterimRef.current;
+          if (text) {
+            lastInterimRef.current = "";
+            onResultRef.current?.(text, true);
+          }
+        }, silenceTimeout);
       }
     };
 
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error:", event.error);
       if (event.error !== "no-speech" && event.error !== "aborted") {
-        onError?.(event.error);
+        onErrorRef.current?.(event.error);
       }
     };
 
@@ -141,16 +172,23 @@ export function useSpeechRecognition({
 
     recognitionRef.current = recognition;
     recognition.start();
-  }, [language, onResult, onError, continuous]);
+  }, [language, continuous, clearSilenceTimer, silenceTimeout]);
 
   const stop = useCallback(() => {
+    clearSilenceTimer();
+    // Finalize any pending interim text before stopping
+    const pendingText = lastInterimRef.current;
+    if (pendingText) {
+      lastInterimRef.current = "";
+      onResultRef.current?.(pendingText, true);
+    }
     if (recognitionRef.current) {
       const ref = recognitionRef.current;
       recognitionRef.current = null;
       ref.stop();
       setIsListening(false);
     }
-  }, []);
+  }, [clearSilenceTimer]);
 
   return { isListening, isSupported, start, stop };
 }
