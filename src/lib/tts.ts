@@ -1,6 +1,28 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
+const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts-stream`;
+const TTS_FALLBACK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
+
+/** Global handle so callers can interrupt currently-playing TTS (barge-in) */
+let currentAudio: HTMLAudioElement | null = null;
+let currentController: AbortController | null = null;
+
+export function stopTTS() {
+  if (currentController) {
+    try { currentController.abort(); } catch { /* noop */ }
+    currentController = null;
+  }
+  if (currentAudio) {
+    try {
+      currentAudio.pause();
+      currentAudio.src = "";
+    } catch { /* noop */ }
+    currentAudio = null;
+  }
+  if (typeof window !== "undefined" && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+}
 
 /** Wait for browser voices to load (they're async in most browsers) */
 function ensureVoicesLoaded(): Promise<SpeechSynthesisVoice[]> {
@@ -84,66 +106,84 @@ function playBrowserTTS(text: string, lang?: string): Promise<void> {
   });
 }
 
-export async function playTTS(text: string, lang?: string): Promise<void> {
-  // Try ElevenLabs first, fall back to browser TTS
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+/** Split text into sentence-sized chunks for faster time-to-first-audio */
+function chunkText(text: string): string[] {
+  const parts = text
+    .replace(/\s+/g, " ")
+    .match(/[^.!?]+[.!?]+|\S[^.!?]*$/g);
+  return (parts ?? [text]).map((p) => p.trim()).filter(Boolean);
+}
 
-    const response = await fetch(TTS_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      },
-      body: JSON.stringify({ text }),
-    });
+async function fetchTtsBlob(url: string, text: string, signal: AbortSignal): Promise<Blob | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(url, {
+    method: "POST",
+    signal,
+    headers: {
+      "Content-Type": "application/json",
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify({ text }),
+  });
+  const ct = res.headers.get("Content-Type") ?? "";
+  if (!res.ok || !ct.includes("audio/")) {
+    const t = await res.text().catch(() => "");
+    throw new Error(t || `TTS failed ${res.status}`);
+  }
+  const blob = await res.blob();
+  return blob.size ? blob : null;
+}
 
-    const contentType = response.headers.get("Content-Type") ?? "";
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || `TTS request failed: ${response.status}`);
-    }
-
-    if (!contentType.includes("audio/")) {
-      const payload = await response.json().catch(() => null);
-      const reason =
-        payload && typeof payload === "object" && "reason" in payload
-          ? String((payload as { reason?: unknown }).reason ?? "TTS audio unavailable")
-          : "TTS audio unavailable";
-      throw new Error(reason);
-    }
-
-    const audioBlob = await response.blob();
-
-    if (!audioBlob.size) {
-      throw new Error("TTS audio response was empty");
-    }
-
-    const audioUrl = URL.createObjectURL(audioBlob);
+function playBlob(blob: Blob, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const audioUrl = URL.createObjectURL(blob);
     const audio = new Audio(audioUrl);
-
-    return new Promise((resolve, reject) => {
-      audio.onended = () => {
-        URL.revokeObjectURL(audioUrl);
-        resolve();
-      };
-      audio.onerror = (e) => {
-        URL.revokeObjectURL(audioUrl);
-        reject(e);
-      };
-      audio.play().catch(reject);
+    currentAudio = audio;
+    const cleanup = () => {
+      URL.revokeObjectURL(audioUrl);
+      if (currentAudio === audio) currentAudio = null;
+    };
+    signal.addEventListener("abort", () => {
+      try { audio.pause(); } catch { /* noop */ }
+      cleanup();
+      resolve();
     });
-  } catch (e) {
-    console.warn("Hosted TTS unavailable, using browser fallback:", e);
-    try {
-      await playBrowserTTS(text, lang);
-    } catch (fallbackErr) {
-      console.warn("Browser TTS also failed:", fallbackErr);
-      // Silently fail — text response is already shown in UI
+    audio.onended = () => { cleanup(); resolve(); };
+    audio.onerror = (e) => { cleanup(); reject(e); };
+    audio.play().catch((err) => { cleanup(); reject(err); });
+  });
+}
+
+export async function playTTS(text: string, lang?: string): Promise<void> {
+  stopTTS();
+  const controller = new AbortController();
+  currentController = controller;
+
+  const chunks = chunkText(text);
+
+  try {
+    // Pre-fetch the next chunk while playing the current one for seamless flow
+    let pending: Promise<Blob | null> | null = fetchTtsBlob(TTS_URL, chunks[0], controller.signal);
+
+    for (let i = 0; i < chunks.length; i++) {
+      if (controller.signal.aborted) return;
+      const blob = await pending!;
+      // Start fetching next chunk in parallel
+      pending = i + 1 < chunks.length
+        ? fetchTtsBlob(TTS_URL, chunks[i + 1], controller.signal).catch((e) => {
+            console.warn("TTS chunk fetch failed:", e);
+            return null;
+          })
+        : null;
+      if (blob) await playBlob(blob, controller.signal);
+      if (controller.signal.aborted) return;
     }
+  } catch (e) {
+    if (controller.signal.aborted) return;
+    console.warn("Streaming TTS failed, trying browser fallback:", e);
+    try { await playBrowserTTS(text, lang); } catch { /* silent */ }
+  } finally {
+    if (currentController === controller) currentController = null;
   }
 }

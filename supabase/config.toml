@@ -1,1 +1,7 @@
 project_id = "njlqnzkjffaxjabltkrn"
+
+[functions.africastalking-voice]
+verify_jwt = false
+
+[functions.elevenlabs-tts-stream]
+verify_jwt = false
