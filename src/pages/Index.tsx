@@ -16,7 +16,7 @@ import StatusBadge from "@/components/dashboard/StatusBadge";
 import { useSpeechRecognition, SUPPORTED_LANGUAGES } from "@/hooks/useSpeechRecognition";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { playTTS } from "@/lib/tts";
+import { playTTS, stopTTS } from "@/lib/tts";
 import type { AIState, TranscriptMessage } from "@/lib/mockData";
 
 // Map language codes to readable names for the AI prompt
@@ -101,6 +101,12 @@ const Index = () => {
       language: selectedLanguage,
       continuous: true,
       onResult: (text, isFinal) => {
+        // Barge-in: as soon as user speaks, cut Alex off
+        if (!isFinal && text && text.length > 2 && isSpeakingRef.current) {
+          stopTTS();
+          isSpeakingRef.current = false;
+          setAiState("listening");
+        }
         if (isFinal && !isSpeakingRef.current) {
           const ts = new Date().toLocaleTimeString();
           const newMsg: TranscriptMessage = {
@@ -171,6 +177,7 @@ const Index = () => {
 
   const handleEndCall = useCallback(async () => {
     stopListening();
+    stopTTS();
     setCallActive(false);
     setAiState("idle");
     setInterimText("");
