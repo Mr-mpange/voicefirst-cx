@@ -7,6 +7,7 @@ import {
   Bot,
   History,
   LogOut,
+  KeyRound,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -26,8 +27,9 @@ import {
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Voice Assistant", url: "/", icon: Phone },
+  { title: "Voice Assistant", url: "/app", icon: Phone },
   { title: "Conversations", url: "/conversations", icon: History },
+  { title: "API Keys", url: "/dashboard/api-keys", icon: KeyRound },
   { title: "Admin Analytics", url: "/admin", icon: BarChart3 },
   { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen },
   { title: "System Status", url: "/system-status", icon: Activity },
