@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Phone, Bot, Clock, AlertTriangle, MessageSquare, Globe, Loader2, FileText } from "lucide-react";
+import { Phone, Bot, Clock, AlertTriangle, MessageSquare, Globe, Loader2, FileText, Activity, TrendingUp } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import MetricCard from "@/components/dashboard/MetricCard";
 import TranscriptFeed from "@/components/voice/TranscriptFeed";
@@ -10,6 +10,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPPORTED_LANGUAGES } from "@/hooks/useSpeechRecognition";
 import type { TranscriptMessage } from "@/lib/mockData";
+import {
+  Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from "recharts";
 
 interface Conversation {
   id: string;
@@ -63,6 +66,25 @@ const Dashboard = () => {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
+  // Build daily trend data (last 14 days)
+  const days = Array.from({ length: 14 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    const key = d.toISOString().slice(0, 10);
+    const dayCalls = conversations.filter((c) => c.created_at.slice(0, 10) === key);
+    return {
+      day: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      calls: dayCalls.length,
+      minutes: Math.round(dayCalls.reduce((a, c) => a + c.duration_seconds, 0) / 60),
+    };
+  });
+
+  // Hourly distribution (24h)
+  const hours = Array.from({ length: 24 }).map((_, h) => ({
+    hour: `${h}h`,
+    calls: conversations.filter((c) => new Date(c.created_at).getHours() === h).length,
+  }));
+
   if (isLoading) {
     return (
       <DashboardLayout title="Dashboard">
@@ -75,6 +97,33 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout title="Dashboard">
+      {/* Hero waveform header */}
+      <Card className="relative overflow-hidden border-border/50 mb-6 p-6 bg-gradient-to-br from-primary/10 via-card/60 to-card/40">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.25),transparent_60%)]" />
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+              {activeCalls > 0 ? `${activeCalls} live call${activeCalls > 1 ? "s" : ""}` : "Alex is online"}
+            </div>
+            <h2 className="mt-3 text-2xl font-bold">Live operations</h2>
+            <p className="text-sm text-muted-foreground mt-1">Real-time view of every voice conversation across your channels.</p>
+          </div>
+          <div className="flex items-end gap-1 h-16">
+            {Array.from({ length: 48 }).map((_, i) => {
+              const h = 20 + Math.abs(Math.sin(i * 0.6 + Date.now() / 5000)) * 40;
+              return (
+                <div
+                  key={i}
+                  className="w-1 rounded-full bg-gradient-to-t from-primary/30 to-primary"
+                  style={{ height: `${h}%`, animation: `pulse 1.5s ease-in-out ${i * 0.05}s infinite` }}
+                />
+              );
+            })}
+          </div>
+        </div>
+      </Card>
+
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <MetricCard icon={Phone} label="Total Calls" value={totalCalls} />
@@ -91,6 +140,57 @@ const Dashboard = () => {
           value={activeCalls}
           trend={activeCalls > 0 ? { value: `${activeCalls} in progress`, positive: false } : undefined}
         />
+      </div>
+
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <Card className="lg:col-span-2 p-4 border-border/50">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold">Calls — last 14 days</h3>
+              <p className="text-xs text-muted-foreground">Daily volume and minutes spoken</p>
+            </div>
+            <TrendingUp className="h-4 w-4 text-primary" />
+          </div>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={days}>
+                <defs>
+                  <linearGradient id="gCalls" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="day" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                />
+                <Area type="monotone" dataKey="calls" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#gCalls)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+        <Card className="p-4 border-border/50">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold">Hourly distribution</h3>
+              <p className="text-xs text-muted-foreground">When customers call</p>
+            </div>
+            <Activity className="h-4 w-4 text-primary" />
+          </div>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={hours}>
+                <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="hour" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }} axisLine={false} tickLine={false} interval={3} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                <Bar dataKey="calls" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
       </div>
 
       {/* Main content */}
