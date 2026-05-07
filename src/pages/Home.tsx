@@ -27,14 +27,18 @@ const steps = [
 
 const integrations = [
   { name: "Africa's Talking", desc: "Telephony for African markets" },
-  { name: "Twilio", desc: "Global SIP & PSTN" },
-  { name: "ElevenLabs", desc: "Ultra-realistic voices" },
-  { name: "OpenAI", desc: "GPT-5 reasoning" },
-  { name: "Google Gemini", desc: "Multimodal AI" },
-  { name: "Supabase", desc: "Auth + storage" },
-  { name: "Stripe", desc: "Billing & checkout" },
-  { name: "Zapier", desc: "5000+ apps" },
+  { name: "Briq", desc: "SMS & messaging across Africa" },
 ];
+
+const trustLogos = [
+  { name: "Africa's Talking", src: "https://logo.clearbit.com/africastalking.com" },
+  { name: "Briq", src: "https://logo.clearbit.com/briq.tz" },
+];
+
+const integrationLogos: Record<string, string> = {
+  "Africa's Talking": "https://logo.clearbit.com/africastalking.com",
+  "Briq": "https://logo.clearbit.com/briq.tz",
+};
 
 const Home = () => (
   <div className="min-h-screen bg-background">
@@ -90,10 +94,21 @@ const Home = () => (
 
       {/* Logos / trust */}
       <section className="border-y border-border/40 bg-card/20">
-        <div className="mx-auto max-w-6xl px-4 py-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm text-muted-foreground">
-          <span className="text-xs uppercase tracking-widest">Trusted by teams using</span>
-          {["Africa's Talking", "Twilio", "ElevenLabs", "OpenAI", "Supabase", "Stripe"].map((n) => (
-            <span key={n} className="font-semibold text-foreground/70">{n}</span>
+        <div className="mx-auto max-w-6xl px-4 py-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
+          <span className="text-xs uppercase tracking-widest text-muted-foreground">Trusted by teams using</span>
+          {trustLogos.map((l) => (
+            <div key={l.name} className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
+              <img
+                src={l.src}
+                alt={`${l.name} logo`}
+                width={28}
+                height={28}
+                loading="lazy"
+                className="h-7 w-7 rounded-md bg-white/90 p-1 object-contain"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
+              <span className="font-semibold text-sm text-foreground/80">{l.name}</span>
+            </div>
           ))}
         </div>
       </section>
@@ -153,11 +168,22 @@ const Home = () => (
           <h2 className="text-3xl md:text-4xl font-bold mt-2">Plays nicely with your stack</h2>
           <p className="mt-2 text-muted-foreground">Native connectors for telephony, AI providers, payments, and CRMs.</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
           {integrations.map((it) => (
-            <div key={it.name} className="rounded-xl border border-border/50 bg-card/40 p-5 text-center hover:border-primary/40 transition-colors">
-              <div className="font-semibold">{it.name}</div>
-              <div className="text-xs text-muted-foreground mt-1">{it.desc}</div>
+            <div key={it.name} className="rounded-xl border border-border/50 bg-card/40 p-6 flex items-center gap-4 hover:border-primary/40 transition-colors">
+              <img
+                src={integrationLogos[it.name]}
+                alt={`${it.name} logo`}
+                width={48}
+                height={48}
+                loading="lazy"
+                className="h-12 w-12 rounded-lg bg-white p-2 object-contain shrink-0"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
+              <div className="text-left">
+                <div className="font-semibold">{it.name}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{it.desc}</div>
+              </div>
             </div>
           ))}
         </div>
