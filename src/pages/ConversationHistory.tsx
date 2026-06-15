@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -82,6 +83,15 @@ const ConversationHistory = () => {
 
   return (
     <DashboardLayout title="Conversation History">
+      <Helmet>
+        <title>Conversation History — VoiceAI</title>
+        <meta name="description" content="Browse VoiceAI call recordings, transcripts, and AI-generated summaries from every conversation Alex has had with your customers." />
+        <meta name="robots" content="noindex" />
+        <link rel="canonical" href="https://audient-assist-pro.lovable.app/conversations" />
+        <meta property="og:title" content="Conversation History — VoiceAI" />
+        <meta property="og:description" content="Transcripts and summaries for every AI voice conversation." />
+        <meta property="og:url" content="https://audient-assist-pro.lovable.app/conversations" />
+      </Helmet>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Conversation History</h1>
