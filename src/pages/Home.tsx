@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   ArrowRight, Phone, Globe, Zap, Shield, Code2, Headphones,
   Mic, Brain, MessageSquare, CheckCircle2, Sparkles, PlayCircle,
