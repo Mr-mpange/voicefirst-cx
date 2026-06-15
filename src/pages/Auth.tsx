@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { lovable } from "@/integrations/lovable/index";
@@ -83,6 +84,13 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <Helmet>
+        <title>Sign in to VoiceAI</title>
+        <meta name="description" content="Sign in or create your VoiceAI account to deploy human-like AI phone agents." />
+        <link rel="canonical" href="https://audient-assist-pro.lovable.app/auth" />
+        <meta name="robots" content="noindex" />
+      </Helmet>
+      <h1 className="sr-only">Sign in to VoiceAI</h1>
       <Card className="w-full max-w-md bg-card border-border/50">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
