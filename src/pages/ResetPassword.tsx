@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,11 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <Helmet>
+        <title>Reset your password — VoiceAI</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
+      <h1 className="sr-only">Reset your password</h1>
       <Card className="w-full max-w-md bg-card border-border/50">
         <CardHeader className="text-center">
           <div className="mx-auto h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mb-2">

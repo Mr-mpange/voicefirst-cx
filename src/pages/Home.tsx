@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   ArrowRight, Phone, Globe, Zap, Shield, Code2, Headphones,
   Mic, Brain, MessageSquare, CheckCircle2, Sparkles, PlayCircle,
@@ -42,6 +43,15 @@ const integrationLogos: Record<string, string> = {
 
 const Home = () => (
   <div className="min-h-screen bg-background">
+    <Helmet>
+      <title>VoiceAI — Human-like AI phone agents for customer care</title>
+      <meta name="description" content="Deploy realistic 24/7 AI voice agents for customer support that understand 30+ languages and integrate with your knowledge base." />
+      <link rel="canonical" href="https://audient-assist-pro.lovable.app/" />
+      <meta property="og:title" content="VoiceAI — AI Phone Agents That Sound Human" />
+      <meta property="og:description" content="Deploy realistic 24/7 AI voice agents for customer support that understand 30+ languages and integrate with your knowledge base." />
+      <meta property="og:url" content="https://audient-assist-pro.lovable.app/" />
+      <script type="application/ld+json">{JSON.stringify({"@context":"https://schema.org","@type":"SoftwareApplication","name":"VoiceAI","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"Human-like AI phone agents for customer care with multilingual support and knowledge-base grounding.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}})}</script>
+    </Helmet>
     <MarketingNav />
     <main>
       {/* Hero */}

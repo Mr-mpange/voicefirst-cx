@@ -7,6 +7,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
@@ -236,7 +237,9 @@ const KnowledgeBase = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Label htmlFor="kb-search" className="sr-only">Search knowledge base</Label>
           <Input
+            id="kb-search"
             placeholder="Search knowledge base..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -303,6 +306,7 @@ const KnowledgeBase = () => {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7"
+                    aria-label={`View ${entry.title}`}
                     onClick={() => setViewEntry(entry)}
                   >
                     <Eye className="h-3 w-3" />
@@ -311,6 +315,7 @@ const KnowledgeBase = () => {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7"
+                    aria-label={`Edit ${entry.title}`}
                     onClick={() => openEdit(entry)}
                   >
                     <Edit className="h-3 w-3" />
@@ -319,6 +324,7 @@ const KnowledgeBase = () => {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-destructive"
+                    aria-label={`Delete ${entry.title}`}
                     onClick={() => {
                       if (confirm("Delete this entry?")) deleteMutation.mutate(entry.id);
                     }}
@@ -389,14 +395,17 @@ const KnowledgeBase = () => {
             <DialogTitle>{editingEntry ? "Edit Entry" : "Add Knowledge Entry"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <Label htmlFor="kb-title">Title</Label>
             <Input
+              id="kb-title"
               placeholder="Title"
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
               className="bg-background border-border/50"
             />
+            <Label htmlFor="kb-category">Category</Label>
             <Select value={formCategory} onValueChange={setFormCategory}>
-              <SelectTrigger className="bg-background border-border/50">
+              <SelectTrigger id="kb-category" className="bg-background border-border/50">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -407,7 +416,9 @@ const KnowledgeBase = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Label htmlFor="kb-content">Content</Label>
             <Textarea
+              id="kb-content"
               placeholder="Content / business logic description..."
               value={formContent}
               onChange={(e) => setFormContent(e.target.value)}
