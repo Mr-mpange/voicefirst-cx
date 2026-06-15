@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MarketingNav from "@/components/marketing/MarketingNav";
@@ -36,6 +37,15 @@ const tiers = [
 
 const Pricing = () => (
   <div className="min-h-screen bg-background">
+    <Helmet>
+      <title>Pricing — VoiceAI</title>
+      <meta name="description" content="Simple, transparent pricing for VoiceAI: start free with 100 voice minutes, scale to Pro and Business as your call volume grows." />
+      <link rel="canonical" href="https://audient-assist-pro.lovable.app/pricing" />
+      <meta property="og:title" content="Pricing — VoiceAI" />
+      <meta property="og:description" content="Pay for the minutes you use. Start free, upgrade when you're ready." />
+      <meta property="og:url" content="https://audient-assist-pro.lovable.app/pricing" />
+      <script type="application/ld+json">{JSON.stringify({"@context":"https://schema.org","@type":"Product","name":"VoiceAI","description":"AI phone agents for customer care.","offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"USD"},{"@type":"Offer","name":"Pro","price":"49","priceCurrency":"USD"},{"@type":"Offer","name":"Business","price":"199","priceCurrency":"USD"}]})}</script>
+    </Helmet>
     <MarketingNav />
     <main className="mx-auto max-w-6xl px-4 py-16">
       <div className="text-center mb-14">
@@ -57,7 +67,7 @@ const Pricing = () => (
                 Most popular
               </span>
             )}
-            <h3 className="font-bold text-xl">{t.name}</h3>
+            <h2 className="font-bold text-xl">{t.name}</h2>
             <p className="text-sm text-muted-foreground">{t.desc}</p>
             <div className="mt-5 flex items-baseline gap-1">
               <span className="text-4xl font-bold">{t.price}</span>
