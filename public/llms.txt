@@ -1,0 +1,18 @@
+# VoiceAI
+
+> Human-like AI phone agents for customer care, sales, and support — multilingual, 24/7, and connected to your knowledge base.
+
+VoiceAI deploys realistic AI voice agents ("Alex") that handle customer calls in 30+ languages, draw answers from your uploaded knowledge base, and integrate with telephony providers like Africa's Talking and Briq.
+
+## Pages
+
+- [Home](/): product overview, how it works, integrations, and trusted partners.
+- [Pricing](/pricing): plan tiers and what's included at each level.
+
+## Docs
+
+- [Developer Documentation](/docs): REST API reference covering authentication, placing voice calls, managing the knowledge base, webhooks, and error codes.
+
+## Optional
+
+- [Sitemap](/sitemap.xml)
