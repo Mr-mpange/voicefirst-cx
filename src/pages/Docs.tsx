@@ -24,6 +24,14 @@ const Docs = () => {
   const [active, setActive] = useState("intro");
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Developer Documentation — VoiceAI</title>
+        <meta name="description" content="REST API docs for VoiceAI: authenticate, place calls, manage your knowledge base, and consume webhooks." />
+        <link rel="canonical" href="https://audient-assist-pro.lovable.app/docs" />
+        <meta property="og:title" content="Developer Documentation — VoiceAI" />
+        <meta property="og:description" content="Build with the VoiceAI REST API: calls, knowledge base, webhooks, errors." />
+        <meta property="og:url" content="https://audient-assist-pro.lovable.app/docs" />
+      </Helmet>
       <MarketingNav />
       <div className="mx-auto max-w-6xl px-4 py-10 grid md:grid-cols-[200px_1fr] gap-10">
         <aside className="md:sticky md:top-20 self-start">
