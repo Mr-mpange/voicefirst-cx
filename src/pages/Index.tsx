@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Mic, PhoneOff, UserPlus, Timer, Globe, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -223,6 +224,16 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center relative px-4">
+      <Helmet>
+        <title>Live AI Agent — Talk to Alex | VoiceAI</title>
+        <meta name="description" content="Live VoiceAI agent interface. Pick a language, tap the mic, and have a real-time conversation with Alex, your AI phone agent." />
+        <meta name="robots" content="noindex" />
+        <link rel="canonical" href="https://audient-assist-pro.lovable.app/app" />
+        <meta property="og:title" content="Live AI Agent — Talk to Alex | VoiceAI" />
+        <meta property="og:description" content="Real-time voice conversation with Alex, the VoiceAI agent." />
+        <meta property="og:url" content="https://audient-assist-pro.lovable.app/app" />
+      </Helmet>
+      <h1 className="sr-only">Live AI Agent — Voice conversation with Alex</h1>
       {/* Nav */}
       <div className="absolute top-4 left-4 flex items-center gap-4">
         <Link
@@ -302,6 +313,7 @@ const Index = () => {
           <button
             onClick={handleMicClick}
             disabled={callActive}
+            aria-label={callActive ? "End call with Alex" : "Start call with Alex"}
             className={`relative z-10 h-20 w-20 rounded-full flex items-center justify-center transition-all duration-300 ${
               callActive
                 ? "bg-primary shadow-[0_0_30px_hsl(217,91%,60%,0.4)]"

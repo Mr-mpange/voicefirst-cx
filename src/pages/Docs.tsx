@@ -31,6 +31,23 @@ const Docs = () => {
         <meta property="og:title" content="Developer Documentation — VoiceAI" />
         <meta property="og:description" content="Build with the VoiceAI REST API: calls, knowledge base, webhooks, errors." />
         <meta property="og:url" content="https://audient-assist-pro.lovable.app/docs" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "TechArticle",
+          headline: "VoiceAI Developer Documentation",
+          description: "REST API reference for VoiceAI: authentication, voice calls, knowledge base, webhooks, and errors.",
+          author: { "@type": "Organization", name: "VoiceAI" },
+          publisher: { "@type": "Organization", name: "VoiceAI" },
+          url: "https://audient-assist-pro.lovable.app/docs",
+        })}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://audient-assist-pro.lovable.app/" },
+            { "@type": "ListItem", position: 2, name: "Docs", item: "https://audient-assist-pro.lovable.app/docs" },
+          ],
+        })}</script>
       </Helmet>
       <MarketingNav />
       <div className="mx-auto max-w-6xl px-4 py-10 grid md:grid-cols-[200px_1fr] gap-10">

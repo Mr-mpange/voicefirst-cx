@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import {
   Search, Plus, Edit, Trash2, Upload, FileText, Loader2, X, Save, Eye,
 } from "lucide-react";
@@ -233,6 +234,15 @@ const KnowledgeBase = () => {
 
   return (
     <DashboardLayout title="Knowledge Base">
+      <Helmet>
+        <title>Knowledge Base — VoiceAI</title>
+        <meta name="description" content="Manage the knowledge that powers your VoiceAI agent. Upload documents, add FAQs, and organize what Alex tells your customers." />
+        <meta name="robots" content="noindex" />
+        <link rel="canonical" href="https://audient-assist-pro.lovable.app/knowledge-base" />
+        <meta property="og:title" content="Knowledge Base — VoiceAI" />
+        <meta property="og:description" content="Curate the documents and FAQs that your AI agent uses on every call." />
+        <meta property="og:url" content="https://audient-assist-pro.lovable.app/knowledge-base" />
+      </Helmet>
       {/* Search & actions */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">

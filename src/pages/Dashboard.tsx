@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { Phone, Bot, Clock, AlertTriangle, MessageSquare, Globe, Loader2, FileText, Activity, TrendingUp } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import MetricCard from "@/components/dashboard/MetricCard";
@@ -97,6 +98,15 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout title="Dashboard">
+      <Helmet>
+        <title>Operations Dashboard — VoiceAI</title>
+        <meta name="description" content="Real-time VoiceAI operations dashboard: active calls, languages, daily volume, and conversation analytics for your AI phone agents." />
+        <meta name="robots" content="noindex" />
+        <link rel="canonical" href="https://audient-assist-pro.lovable.app/dashboard" />
+        <meta property="og:title" content="Operations Dashboard — VoiceAI" />
+        <meta property="og:description" content="Live view of every AI voice conversation across your channels." />
+        <meta property="og:url" content="https://audient-assist-pro.lovable.app/dashboard" />
+      </Helmet>
       {/* Hero waveform header */}
       <Card className="relative overflow-hidden border-border/50 mb-6 p-6 bg-gradient-to-br from-primary/10 via-card/60 to-card/40">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.25),transparent_60%)]" />
