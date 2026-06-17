@@ -44,6 +44,7 @@ async function sha256(input: string) {
 const ApiKeys = () => {
   const { user } = useAuth();
   const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [maxKeys, setMaxKeys] = useState<number>(5);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -59,6 +60,14 @@ const ApiKeys = () => {
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     else setKeys(data ?? []);
+    if (user) {
+      const { data: limitRow } = await supabase
+        .from("api_key_limits")
+        .select("max_keys")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setMaxKeys(limitRow?.max_keys ?? 5);
+    }
     setLoading(false);
   };
 
@@ -121,8 +130,16 @@ const ApiKeys = () => {
               Create key + secret pairs to authenticate with the VoiceAI REST API.
               Secrets are shown once at creation — store them safely.
             </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {keys.filter((k) => !k.revoked_at).length} of {maxKeys} active keys used
+              {keys.filter((k) => !k.revoked_at).length >= maxKeys && " — limit reached, ask an admin to raise it."}
+            </p>
           </div>
-          <Button onClick={() => setOpen(true)} className="gap-2">
+          <Button
+            onClick={() => setOpen(true)}
+            className="gap-2"
+            disabled={keys.filter((k) => !k.revoked_at).length >= maxKeys}
+          >
             <Plus className="h-4 w-4" /> New key
           </Button>
         </div>

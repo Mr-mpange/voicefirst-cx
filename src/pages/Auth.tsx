@@ -14,18 +14,27 @@ import { toast } from "sonner";
 
 const Auth = () => {
   const { user, loading: authLoading } = useAuth();
+
+  const redirectByRole = async () => {
+    const { data: { user: u } } = await supabase.auth.getUser();
+    if (!u) { navigate("/auth", { replace: true }); return; }
+    const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.id);
+    const isAdmin = (data ?? []).some((r: any) => r.role === "admin");
+    navigate(isAdmin ? "/admin" : "/dashboard", { replace: true });
+  };
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Redirect authenticated users to home
+  // Redirect authenticated users to their dashboard
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/", { replace: true });
+      redirectByRole();
     }
-  }, [user, authLoading, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +43,7 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/");
+        await redirectByRole();
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -57,8 +66,7 @@ const Auth = () => {
     });
     if (result.error) toast.error("Google sign-in failed");
     if (result.redirected) return;
-    // If tokens received directly, navigate
-    navigate("/", { replace: true });
+    await redirectByRole();
   };
 
   const handleAppleSignIn = async () => {
@@ -67,7 +75,7 @@ const Auth = () => {
     });
     if (result.error) toast.error("Apple sign-in failed");
     if (result.redirected) return;
-    navigate("/", { replace: true });
+    await redirectByRole();
   };
 
   const handleForgotPassword = async () => {

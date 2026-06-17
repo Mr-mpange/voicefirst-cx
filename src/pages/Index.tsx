@@ -74,11 +74,15 @@ const Index = () => {
     [selectedLanguage]
   );
 
-  // AI speaks a message, then starts listening
+  // AI speaks a message. While speaking, the mic is OFF so Alex doesn't
+  // hear and transcribe its own voice. Mic is restarted after speech ends.
   const aiSpeak = useCallback(async (text: string) => {
     if (isSpeakingRef.current) return;
     isSpeakingRef.current = true;
     setAiState("speaking");
+    // Pause mic to prevent self-listening
+    try { stopListening(); } catch { /* noop */ }
+
     const aiTs = new Date().toLocaleTimeString();
     const aiMsg: TranscriptMessage = {
       id: `m${msgCountRef.current++}`,
@@ -93,8 +97,11 @@ const Index = () => {
     } catch (e) {
       console.error("TTS playback failed:", e);
     }
+    // Small grace period so the tail of the audio doesn't trigger the mic
+    await new Promise((r) => setTimeout(r, 250));
     isSpeakingRef.current = false;
     setAiState("listening");
+    try { startListening(); } catch { /* noop */ }
   }, [selectedLanguage]);
 
   const { isListening, isSupported, start: startListening, stop: stopListening } =
@@ -102,13 +109,9 @@ const Index = () => {
       language: selectedLanguage,
       continuous: true,
       onResult: (text, isFinal) => {
-        // Barge-in: as soon as user speaks, cut Alex off
-        if (!isFinal && text && text.length > 2 && isSpeakingRef.current) {
-          stopTTS();
-          isSpeakingRef.current = false;
-          setAiState("listening");
-        }
-        if (isFinal && !isSpeakingRef.current) {
+        // Mic is muted while Alex speaks, so any result here is the user
+        if (isSpeakingRef.current) return;
+        if (isFinal) {
           const ts = new Date().toLocaleTimeString();
           const newMsg: TranscriptMessage = {
             id: `m${msgCountRef.current++}`,

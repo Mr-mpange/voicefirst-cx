@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { Phone, Bot, Clock, AlertTriangle, MessageSquare, Globe, Loader2, FileText, Activity, TrendingUp } from "lucide-react";
+import { Phone, Bot, Clock, AlertTriangle, MessageSquare, Globe, Loader2, FileText, Activity, TrendingUp, Shield } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useRole } from "@/hooks/useRole";
+import { Link } from "react-router-dom";
 import MetricCard from "@/components/dashboard/MetricCard";
 import TranscriptFeed from "@/components/voice/TranscriptFeed";
 import { Card } from "@/components/ui/card";
@@ -36,6 +40,18 @@ function formatDuration(s: number) {
 
 const Dashboard = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { isAdmin, loading: roleLoading } = useRole();
+
+  const claimAdmin = async () => {
+    const { data, error } = await supabase.rpc("bootstrap_admin");
+    if (error) toast.error(error.message);
+    else if (data) {
+      toast.success("You are now an admin — reloading…");
+      setTimeout(() => window.location.assign("/admin"), 800);
+    } else {
+      toast.error("An admin already exists. Ask them to grant you access.");
+    }
+  };
 
   const { data: conversations = [], isLoading } = useQuery({
     queryKey: ["dashboard-conversations"],
@@ -118,6 +134,19 @@ const Dashboard = () => {
             </div>
             <h2 className="mt-3 text-2xl font-bold">Live operations</h2>
             <p className="text-sm text-muted-foreground mt-1">Real-time view of every voice conversation across your channels.</p>
+            {!roleLoading && (
+              <div className="mt-3 flex gap-2">
+                {isAdmin ? (
+                  <Button asChild size="sm" variant="outline" className="gap-1.5">
+                    <Link to="/admin"><Shield className="h-3.5 w-3.5" /> Admin panel</Link>
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={claimAdmin} className="gap-1.5">
+                    <Shield className="h-3.5 w-3.5" /> Claim admin (first user)
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex items-end gap-1 h-16">
             {Array.from({ length: 48 }).map((_, i) => {
