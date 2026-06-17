@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { Phone, Bot, Clock, AlertTriangle, MessageSquare, Globe, Loader2, FileText, Activity, TrendingUp } from "lucide-react";
+import { Phone, Bot, Clock, AlertTriangle, MessageSquare, Globe, Loader2, FileText, Activity, TrendingUp, Shield } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useRole } from "@/hooks/useRole";
+import { Link } from "react-router-dom";
 import MetricCard from "@/components/dashboard/MetricCard";
 import TranscriptFeed from "@/components/voice/TranscriptFeed";
 import { Card } from "@/components/ui/card";
@@ -36,6 +40,18 @@ function formatDuration(s: number) {
 
 const Dashboard = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { isAdmin, loading: roleLoading } = useRole();
+
+  const claimAdmin = async () => {
+    const { data, error } = await supabase.rpc("bootstrap_admin");
+    if (error) toast.error(error.message);
+    else if (data) {
+      toast.success("You are now an admin — reloading…");
+      setTimeout(() => window.location.assign("/admin"), 800);
+    } else {
+      toast.error("An admin already exists. Ask them to grant you access.");
+    }
+  };
 
   const { data: conversations = [], isLoading } = useQuery({
     queryKey: ["dashboard-conversations"],
