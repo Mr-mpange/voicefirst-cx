@@ -134,6 +134,19 @@ const Dashboard = () => {
             </div>
             <h2 className="mt-3 text-2xl font-bold">Live operations</h2>
             <p className="text-sm text-muted-foreground mt-1">Real-time view of every voice conversation across your channels.</p>
+            {!roleLoading && (
+              <div className="mt-3 flex gap-2">
+                {isAdmin ? (
+                  <Button asChild size="sm" variant="outline" className="gap-1.5">
+                    <Link to="/admin"><Shield className="h-3.5 w-3.5" /> Admin panel</Link>
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={claimAdmin} className="gap-1.5">
+                    <Shield className="h-3.5 w-3.5" /> Claim admin (first user)
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex items-end gap-1 h-16">
             {Array.from({ length: 48 }).map((_, i) => {
