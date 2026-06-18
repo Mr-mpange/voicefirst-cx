@@ -12,6 +12,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/hooks/useRole";
 import {
   Sidebar,
   SidebarContent,
@@ -25,12 +26,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const navItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Voice Assistant", url: "/app", icon: Phone },
-  { title: "Conversations", url: "/conversations", icon: History },
-  { title: "API Keys", url: "/dashboard/api-keys", icon: KeyRound },
-  { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen },
+const allNavItems = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, adminOnly: false },
+  { title: "Voice Assistant", url: "/app", icon: Phone, adminOnly: false },
+  { title: "Conversations", url: "/conversations", icon: History, adminOnly: false },
+  { title: "API Keys", url: "/dashboard/api-keys", icon: KeyRound, adminOnly: false },
+  { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen, adminOnly: false },
+  { title: "Admin", url: "/admin", icon: BarChart3, adminOnly: true },
 ];
 
 export function AppSidebar() {
@@ -38,8 +40,16 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin, loading: roleLoading } = useRole();
   const isActive = (path: string) => location.pathname === path;
   const initials = user?.email?.slice(0, 2).toUpperCase() || "?";
+
+  const navItems = allNavItems.filter((item) => {
+    if (roleLoading) return !item.adminOnly;
+    if (item.adminOnly) return isAdmin;
+    if (item.title === "Voice Assistant") return !isAdmin;
+    return true;
+  });
 
   return (
     <Sidebar collapsible="icon">
