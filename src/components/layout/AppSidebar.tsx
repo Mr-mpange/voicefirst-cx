@@ -35,14 +35,21 @@ const allNavItems = [
   { title: "Admin", url: "/admin", icon: BarChart3, adminOnly: true },
 ];
 
-
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin, loading: roleLoading } = useRole();
   const isActive = (path: string) => location.pathname === path;
   const initials = user?.email?.slice(0, 2).toUpperCase() || "?";
+
+  const navItems = allNavItems.filter((item) => {
+    if (roleLoading) return !item.adminOnly;
+    if (item.adminOnly) return isAdmin;
+    if (item.title === "Voice Assistant") return !isAdmin;
+    return true;
+  });
 
   return (
     <Sidebar collapsible="icon">
