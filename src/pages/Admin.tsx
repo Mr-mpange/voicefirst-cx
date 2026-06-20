@@ -262,25 +262,25 @@ const Admin = () => {
               ? undefined
               : { value: `${metrics.deltaPct >= 0 ? "+" : ""}${metrics.deltaPct}% vs yesterday`, positive: metrics.deltaPct >= 0 }
           }
-          sparklineData={metrics.sparkCalls}
+          sparklineData={metrics.sparkCalls.map((v) => ({ value: v }))}
         />
         <MetricCard
           icon={CheckCircle}
           label="AI Resolution Rate"
           value={`${metrics.resolution.toFixed(1)}%`}
-          sparklineData={metrics.sparkRes}
+          sparklineData={metrics.sparkRes.map((v) => ({ value: v }))}
         />
         <MetricCard
           icon={Clock}
           label="Avg Call Duration"
           value={metrics.avgDurationLabel}
-          sparklineData={metrics.sparkDur}
+          sparklineData={metrics.sparkDur.map((v) => ({ value: v }))}
         />
         <MetricCard
           icon={Star}
           label="Total Users"
           value={rows.length.toLocaleString()}
-          sparklineData={[rows.length]}
+          sparklineData={[{ value: rows.length }]}
         />
       </div>
 
