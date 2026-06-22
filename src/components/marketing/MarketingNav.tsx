@@ -1,12 +1,13 @@
 import { Link, NavLink } from "react-router-dom";
-import { Bot } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
+const NAVY_DEEP = "#0f1b3d";
+const NAVY_ACCENT = "#3b6fa0";
+const PAPER = "#e8edf3";
+
 const links = [
-  { to: "/", label: "Home" },
-  { to: "/#how-it-works", label: "How it works" },
-  { to: "/#integrations", label: "Integrations" },
+  { to: "/", label: "Overview" },
+  { to: "/how-it-works", label: "How it works" },
   { to: "/pricing", label: "Pricing" },
   { to: "/docs", label: "Docs" },
 ];
@@ -14,13 +15,21 @@ const links = [
 const MarketingNav = () => {
   const { user } = useAuth();
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto max-w-6xl flex h-14 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-primary/40 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-primary-foreground" />
+    <header
+      className="sticky top-0 z-40 w-full border-b backdrop-blur-xl font-sans"
+      style={{ backgroundColor: `${NAVY_DEEP}CC`, borderColor: `${NAVY_ACCENT}33` }}
+    >
+      <div className="mx-auto max-w-7xl flex h-16 items-center justify-between px-4 md:px-8 lg:px-12">
+        <Link to="/" className="flex items-center gap-2.5">
+          <div
+            className="h-8 w-8 rounded-lg flex items-center justify-center font-serif text-base"
+            style={{ backgroundColor: NAVY_ACCENT, color: PAPER }}
+          >
+            A
           </div>
-          <span className="font-bold tracking-tight">VoiceAI</span>
+          <span className="font-serif text-xl tracking-tight" style={{ color: PAPER }}>
+            AudientAssist
+          </span>
         </Link>
         <nav className="hidden md:flex items-center gap-1">
           {links.map((l) => (
@@ -30,27 +39,43 @@ const MarketingNav = () => {
               end
               className={({ isActive }) =>
                 `px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  isActive ? "text-white" : "hover:text-white"
                 }`
               }
+              style={({ isActive }) => ({
+                color: isActive ? PAPER : `${PAPER}99`,
+                backgroundColor: isActive ? `${NAVY_ACCENT}33` : "transparent",
+              })}
             >
               {l.label}
             </NavLink>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {user ? (
-            <Button asChild size="sm">
-              <Link to="/dashboard">Dashboard</Link>
-            </Button>
+            <Link
+              to="/dashboard"
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
+              style={{ backgroundColor: NAVY_ACCENT }}
+            >
+              Dashboard
+            </Link>
           ) : (
             <>
-              <Button asChild size="sm" variant="ghost">
-                <Link to="/auth">Sign in</Link>
-              </Button>
-              <Button asChild size="sm">
-                <Link to="/auth">Get started</Link>
-              </Button>
+              <Link
+                to="/auth"
+                className="hidden sm:inline-block text-sm"
+                style={{ color: `${PAPER}99` }}
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/auth"
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                style={{ backgroundColor: NAVY_ACCENT }}
+              >
+                Deploy Alex
+              </Link>
             </>
           )}
         </div>
