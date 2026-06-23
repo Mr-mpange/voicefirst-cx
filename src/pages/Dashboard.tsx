@@ -124,18 +124,23 @@ const Dashboard = () => {
         <meta property="og:url" content="https://audient-assist-pro.lovable.app/dashboard" />
       </Helmet>
       {/* Hero waveform header */}
-      <Card className="relative overflow-hidden border-border/50 mb-6 p-6 bg-gradient-to-br from-primary/10 via-card/60 to-card/40">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.25),transparent_60%)]" />
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <Card className="relative overflow-hidden border-border/60 mb-6 p-8 bg-gradient-to-br from-primary/10 via-card/70 to-card/40">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.28),transparent_60%)]" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs text-primary">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-widest text-primary">
               <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
               {activeCalls > 0 ? `${activeCalls} live call${activeCalls > 1 ? "s" : ""}` : "Alex is online"}
             </div>
-            <h2 className="mt-3 text-2xl font-bold">Live operations</h2>
-            <p className="text-sm text-muted-foreground mt-1">Real-time view of every voice conversation across your channels.</p>
+            <h2 className="mt-4 font-serif text-4xl md:text-5xl leading-[1.05] text-foreground">
+              Live <span className="italic text-primary">operations</span>
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md">
+              Real-time view of every bilingual voice conversation across your channels — calls, transcripts, summaries.
+            </p>
             {!roleLoading && (
-              <div className="mt-3 flex gap-2">
+              <div className="mt-4 flex gap-2">
                 {isAdmin ? (
                   <Button asChild size="sm" variant="outline" className="gap-1.5">
                     <Link to="/admin"><Shield className="h-3.5 w-3.5" /> Admin panel</Link>
