@@ -13,18 +13,19 @@ interface MetricCardProps {
 
 const MetricCard = ({ icon: Icon, label, value, trend, sparklineData, className = "" }: MetricCardProps) => {
   return (
-    <Card className={`p-4 border-border/50 ${className}`}>
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground font-medium">{label}</p>
-          <p className="text-2xl font-bold text-foreground">{value}</p>
+    <Card className={`relative overflow-hidden p-5 border-border/60 bg-card/60 backdrop-blur-sm hover:border-primary/40 transition-colors ${className}`}>
+      <div className="absolute -top-10 -right-10 h-24 w-24 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
+      <div className="flex items-start justify-between relative">
+        <div className="space-y-1.5">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium">{label}</p>
+          <p className="font-serif text-3xl text-foreground leading-none">{value}</p>
           {trend && (
-            <p className={`text-xs font-medium ${trend.positive ? "text-success" : "text-destructive"}`}>
+            <p className={`text-xs font-medium pt-1 ${trend.positive ? "text-success" : "text-destructive"}`}>
               {trend.positive ? "↑" : "↓"} {trend.value}
             </p>
           )}
         </div>
-        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+        <div className="h-10 w-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center">
           <Icon className="h-4 w-4 text-primary" />
         </div>
       </div>

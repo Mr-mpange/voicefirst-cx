@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Terminal, Key, Phone, BookOpen, Webhook, AlertCircle, BookMarked } from "lucide-react";
+import { Terminal, Key, Phone, BookOpen, Webhook, AlertCircle, BookMarked, Copy, Check } from "lucide-react";
 import MarketingNav from "@/components/marketing/MarketingNav";
 import MarketingFooter from "@/components/marketing/MarketingFooter";
 
@@ -20,22 +20,59 @@ const sections = [
   { id: "errors", label: "Errors", icon: AlertCircle },
 ];
 
-const Code = ({ children, lang = "bash" }: { children: string; lang?: string }) => (
-  <div
-    className="rounded-xl border overflow-hidden my-4"
-    style={{ borderColor: `${NAVY_ACCENT}33`, backgroundColor: NAVY_DEEP }}
-  >
+const Code = ({ children, lang = "bash" }: { children: string; lang?: string }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(children);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  };
+  return (
     <div
-      className="px-4 py-2 text-[10px] uppercase tracking-widest border-b font-mono"
-      style={{ color: NAVY_ACCENT, borderColor: `${NAVY_ACCENT}33`, backgroundColor: `${NAVY_MID}80` }}
+      className="rounded-xl border overflow-hidden my-4 shadow-[0_8px_28px_-12px_rgba(0,0,0,0.6)]"
+      style={{ borderColor: `${NAVY_ACCENT}33`, backgroundColor: NAVY_DEEP }}
     >
-      {lang}
+      <div
+        className="px-4 py-2 border-b flex items-center justify-between"
+        style={{ borderColor: `${NAVY_ACCENT}33`, backgroundColor: `${NAVY_MID}80` }}
+      >
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#ff5f57" }} />
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#febc2e" }} />
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#28c840" }} />
+          </div>
+          <span
+            className="ml-2 text-[10px] uppercase tracking-widest font-mono"
+            style={{ color: NAVY_ACCENT }}
+          >
+            {lang}
+          </span>
+        </div>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] uppercase tracking-wider font-mono transition-colors"
+          style={{
+            color: copied ? "#28c840" : `${PAPER}AA`,
+            backgroundColor: `${NAVY_DEEP}`,
+            border: `1px solid ${NAVY_ACCENT}33`,
+          }}
+          aria-label="Copy code"
+        >
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <pre className="p-4 text-xs overflow-x-auto font-mono leading-relaxed" style={{ color: PAPER }}>
+        <code>{children}</code>
+      </pre>
     </div>
-    <pre className="p-4 text-xs overflow-x-auto font-mono leading-relaxed" style={{ color: PAPER }}>
-      <code>{children}</code>
-    </pre>
-  </div>
-);
+  );
+};
 
 const Docs = () => {
   const [active, setActive] = useState("intro");
