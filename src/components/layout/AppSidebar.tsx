@@ -3,11 +3,11 @@ import {
   Phone,
   BookOpen,
   BarChart3,
-  Activity,
   Bot,
   History,
   LogOut,
   KeyRound,
+  Sparkles,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -23,6 +23,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
 
@@ -52,15 +53,27 @@ export function AppSidebar() {
   });
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border/70 px-3 py-4">
+        <div className="flex items-center gap-2.5">
+          <div className="h-9 w-9 shrink-0 rounded-xl bg-primary/15 border border-primary/30 grid place-items-center">
+            <Bot className="h-4 w-4 text-primary" />
+          </div>
+          {!collapsed && (
+            <div className="leading-tight">
+              <p className="font-serif text-base text-sidebar-foreground">AudientAssist</p>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Console</p>
+            </div>
+          )}
+        </div>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>
-            <div className="flex items-center gap-2">
-              <Bot className="h-4 w-4 text-primary" />
-              {!collapsed && <span className="font-bold text-foreground">VoiceAI</span>}
-            </div>
-          </SidebarGroupLabel>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/80">
+              Workspace
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
@@ -69,8 +82,10 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end
-                      className={`hover:bg-sidebar-accent ${
-                        isActive(item.url) ? "bg-sidebar-accent text-primary font-medium" : ""
+                      className={`rounded-lg transition-colors hover:bg-sidebar-accent ${
+                        isActive(item.url)
+                          ? "bg-sidebar-accent text-primary font-medium border-l-2 border-primary"
+                          : "border-l-2 border-transparent"
                       }`}
                       activeClassName="bg-sidebar-accent text-primary font-medium"
                     >
@@ -83,15 +98,26 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {!collapsed && (
+          <div className="mx-3 mt-4 rounded-xl border border-sidebar-border bg-sidebar-accent/40 p-3">
+            <div className="flex items-center gap-2 text-[11px] text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span className="uppercase tracking-widest">Pro tip</span>
+            </div>
+            <p className="mt-1.5 text-xs text-sidebar-foreground/80 leading-snug">
+              Upload your FAQ to ground Alex in real answers — no hallucinations.
+            </p>
+          </div>
+        )}
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex items-center gap-2 px-2 py-2">
-          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+        <div className="flex items-center gap-2 px-2 py-3 border-t border-sidebar-border/70">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/40 to-primary/10 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary">
             {initials}
           </div>
           {!collapsed && (
-            <div className="flex-1 text-xs">
-              <p className="font-medium text-foreground truncate">{user?.email}</p>
+            <div className="flex-1 text-xs min-w-0">
+              <p className="font-medium text-sidebar-foreground truncate">{user?.email}</p>
               <button
                 onClick={signOut}
                 className="text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 mt-0.5"
