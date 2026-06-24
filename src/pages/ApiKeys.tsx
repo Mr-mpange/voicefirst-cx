@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageHero from "@/components/layout/PageHero";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -123,26 +124,35 @@ const ApiKeys = () => {
 
   return (
     <DashboardLayout title="API Keys">
-      <div className="max-w-4xl">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Create key + secret pairs to authenticate with the VoiceAI REST API.
-              Secrets are shown once at creation — store them safely.
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {keys.filter((k) => !k.revoked_at).length} of {maxKeys} active keys used
-              {keys.filter((k) => !k.revoked_at).length >= maxKeys && " — limit reached, ask an admin to raise it."}
-            </p>
-          </div>
-          <Button
-            onClick={() => setOpen(true)}
-            className="gap-2"
-            disabled={keys.filter((k) => !k.revoked_at).length >= maxKeys}
-          >
-            <Plus className="h-4 w-4" /> New key
-          </Button>
-        </div>
+      <div className="max-w-5xl">
+        <PageHero
+          icon={KeyRound}
+          eyebrow="Programmatic access"
+          title="API keys &"
+          accent="secrets"
+          description="Create key + secret pairs to authenticate with the AudientAssist REST API. Secrets are shown once at creation — store them safely."
+          meta={
+            <>
+              <span className="text-[11px] px-2.5 py-1 rounded-full border border-border/60 bg-background/50 text-muted-foreground">
+                {keys.filter((k) => !k.revoked_at).length} of {maxKeys} active
+              </span>
+              {keys.filter((k) => !k.revoked_at).length >= maxKeys && (
+                <span className="text-[11px] px-2.5 py-1 rounded-full border border-warning/30 bg-warning/10 text-warning">
+                  Limit reached — ask an admin
+                </span>
+              )}
+            </>
+          }
+          actions={
+            <Button
+              onClick={() => setOpen(true)}
+              className="gap-2"
+              disabled={keys.filter((k) => !k.revoked_at).length >= maxKeys}
+            >
+              <Plus className="h-4 w-4" /> New key
+            </Button>
+          }
+        />
 
         <div className="rounded-xl border border-border/50 bg-card/40 overflow-hidden">
           {loading ? (
