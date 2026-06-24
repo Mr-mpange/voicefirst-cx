@@ -2,9 +2,10 @@ import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import {
-  Search, Plus, Edit, Trash2, Upload, FileText, Loader2, X, Save, Eye,
+  Search, Plus, Edit, Trash2, Upload, FileText, Loader2, X, Save, Eye, BookOpen,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageHero from "@/components/layout/PageHero";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -243,6 +244,23 @@ const KnowledgeBase = () => {
         <meta property="og:description" content="Curate the documents and FAQs that your AI agent uses on every call." />
         <meta property="og:url" content="https://audient-assist-pro.lovable.app/knowledge-base" />
       </Helmet>
+      <PageHero
+        icon={BookOpen}
+        eyebrow="Grounded knowledge"
+        title="What Alex"
+        accent="knows"
+        description="Upload documents, add FAQs, and curate the answers your AI voice agent grounds every response in — no hallucinations, just your truth."
+        meta={
+          <>
+            <span className="text-[11px] px-2.5 py-1 rounded-full border border-border/60 bg-background/50 text-muted-foreground">
+              {entries.length} entries
+            </span>
+            <span className="text-[11px] px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary">
+              {CATEGORIES.length} categories
+            </span>
+          </>
+        }
+      />
       {/* Search & actions */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">

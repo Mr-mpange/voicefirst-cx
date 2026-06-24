@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageHero from "@/components/layout/PageHero";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -93,12 +94,23 @@ const ConversationHistory = () => {
         <meta property="og:url" content="https://audient-assist-pro.lovable.app/conversations" />
       </Helmet>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Conversation History</h1>
-          <p className="text-sm text-muted-foreground">
-            Recorded conversations with transcripts and AI summaries
-          </p>
-        </div>
+        <PageHero
+          icon={MessageSquare}
+          eyebrow="Conversation archive"
+          title="Every call,"
+          accent="transcribed"
+          description="Searchable recordings, full bilingual transcripts, and AI-generated summaries from every conversation Alex has handled."
+          meta={
+            <>
+              <span className="text-[11px] px-2.5 py-1 rounded-full border border-border/60 bg-background/50 text-muted-foreground">
+                {conversations?.length ?? 0} total
+              </span>
+              <span className="text-[11px] px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success">
+                {(conversations ?? []).filter((c) => c.status === "summarized").length} summarized
+              </span>
+            </>
+          }
+        />
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
