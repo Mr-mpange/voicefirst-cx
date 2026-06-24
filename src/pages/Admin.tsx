@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Phone, CheckCircle, Clock, Star, Shield, Save, UserCog } from "lucide-react";
+import { Phone, CheckCircle, Clock, Star, Shield, Save, UserCog, BarChart3 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageHero from "@/components/layout/PageHero";
 import MetricCard from "@/components/dashboard/MetricCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -251,6 +252,27 @@ const Admin = () => {
 
   return (
     <DashboardLayout title="Admin Analytics">
+      <PageHero
+        icon={BarChart3}
+        eyebrow="Operations control"
+        title="Admin"
+        accent="analytics"
+        description="Live telemetry across every conversation, language, and team member — plus the controls to govern roles and API access at a glance."
+        meta={
+          <>
+            <span className="text-[11px] px-2.5 py-1 rounded-full border border-border/60 bg-background/50 text-muted-foreground">
+              {convos.length.toLocaleString()} conversations tracked
+            </span>
+            <span className="text-[11px] px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary">
+              {rows.length} users
+            </span>
+            <span className="text-[11px] px-2.5 py-1 rounded-full border border-success/30 bg-success/10 text-success">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-success animate-pulse mr-1.5 align-middle" />
+              Live
+            </span>
+          </>
+        }
+      />
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <MetricCard
