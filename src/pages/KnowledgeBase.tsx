@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import {
-  Search, Plus, Edit, Trash2, Upload, FileText, Loader2, X, Save, Eye,
+  Search, Plus, Edit, Trash2, Upload, FileText, Loader2, X, Save, Eye, BookOpen,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import PageHero from "@/components/layout/PageHero";
