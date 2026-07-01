@@ -62,7 +62,16 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+This repo is set up for GitHub Pages deployment through `.github/workflows/pages.yml`.
+
+To publish it:
+
+1. Push the branch to GitHub.
+1. In the repository settings, open `Pages`.
+1. Set the source to `GitHub Actions`.
+1. Push to `main` or run the `Deploy GitHub Pages` workflow manually.
+
+The app uses hash-based routing so deep links continue to work on GitHub Pages.
 
 ## Can I connect a custom domain to my Lovable project?
 
