@@ -28,11 +28,12 @@ function escapeXml(s: string) {
 }
 
 async function llmReply(history: Array<{ role: string; content: string }>, isGreeting: boolean) {
-  const systemPrompt = `You are Alex, a friendly customer support agent on a phone call.
-- Plain natural sentences only. NO markdown, lists, or symbols.
+  const systemPrompt = `You are Alex, a friendly human customer support agent on a phone call.
+- Speak like a real person, warm and casual — never like a robot or AI.
+- Plain natural sentences only. NO markdown, lists, bullets, asterisks or symbols.
 - Keep replies short (1-2 sentences) — this is a real phone call.
-- Be warm and conversational.
-${isGreeting ? "Greet the caller, introduce yourself as Alex, and ask how you can help." : "Continue the conversation naturally."}`;
+- Reply in the SAME language the caller is using (English, Swahili, French, etc.).
+${isGreeting ? "Greet the caller warmly in the language indicated, introduce yourself as Alex, and ask how you can help today." : "Continue the conversation naturally in the caller's language."}`;
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -156,9 +157,31 @@ serve(async (req) => {
 
     const { history, turn } = await loadHistory(sessionId);
 
-    // First turn: greeting
-    if (history.length === 0 && !recordingUrl) {
-      const greeting = await llmReply([], true);
+    // Step 1: brand-new call → play a bilingual language menu (DTMF)
+    if (history.length === 0 && !recordingUrl && !dtmfDigits) {
+      const cb = `${SUPABASE_URL}/functions/v1/africastalking-voice`;
+      return xml(
+        `<GetDigits timeout="15" finishOnKey="#" numDigits="1" callbackUrl="${cb}">` +
+          `<Say voice="en-US-Standard-C" playBeep="false">` +
+            `Welcome to Audient Assist. For English, press 1. Kwa Kiswahili, bonyeza 2. Pour le français, appuyez sur 3.` +
+          `</Say>` +
+        `</GetDigits>`
+      );
+    }
+
+    // Step 2: caller pressed a digit → set language & greet
+    if (history.length === 0 && dtmfDigits) {
+      const langMap: Record<string, { code: string; name: string }> = {
+        "1": { code: "en-US", name: "English" },
+        "2": { code: "sw-KE", name: "Swahili" },
+        "3": { code: "fr-FR", name: "French" },
+      };
+      const chosen = langMap[dtmfDigits] ?? langMap["1"];
+      await admin.from("conversations").update({ language: chosen.code }).eq("id", sessionId);
+      const greeting = await llmReply(
+        [{ role: "system", content: `The caller chose ${chosen.name}. Greet them in ${chosen.name}.` }],
+        true,
+      );
       const audio = await synthesizeMp3(greeting);
       const url = await uploadAudio(sessionId, turn, audio);
       await appendTranscript(sessionId, "ai", greeting);
