@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Phone,
+  PhoneCall,
   BookOpen,
   BarChart3,
   Bot,
@@ -31,6 +32,7 @@ const allNavItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, adminOnly: false },
   { title: "Voice Assistant", url: "/app", icon: Phone, adminOnly: false },
   { title: "Conversations", url: "/conversations", icon: History, adminOnly: false },
+  { title: "Phone Integration", url: "/dashboard/phone", icon: PhoneCall, adminOnly: false },
   { title: "API Keys", url: "/dashboard/api-keys", icon: KeyRound, adminOnly: false },
   { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen, adminOnly: false },
   { title: "Admin", url: "/admin", icon: BarChart3, adminOnly: true },

@@ -12,6 +12,7 @@ import Pricing from "./pages/Pricing";
 import Docs from "./pages/Docs";
 import HowItWorks from "./pages/HowItWorks";
 import ApiKeys from "./pages/ApiKeys";
+import PhoneIntegration from "./pages/PhoneIntegration";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import KnowledgeBase from "./pages/KnowledgeBase";
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/app" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/dashboard/api-keys" element={<ProtectedRoute><ApiKeys /></ProtectedRoute>} />
+            <Route path="/dashboard/phone" element={<ProtectedRoute><PhoneIntegration /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="/knowledge-base" element={<ProtectedRoute><KnowledgeBase /></ProtectedRoute>} />
             <Route path="/system-status" element={<ProtectedRoute><SystemStatus /></ProtectedRoute>} />
