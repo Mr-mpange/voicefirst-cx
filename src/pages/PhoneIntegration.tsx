@@ -56,7 +56,7 @@ const PhoneIntegration = () => {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Phone Integration">
       <Helmet>
         <title>Phone Integration — AudientAssist</title>
         <meta name="description" content="Connect your Africa's Talking number so Alex handles inbound calls automatically." />
