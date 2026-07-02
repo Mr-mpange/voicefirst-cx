@@ -39,11 +39,15 @@ ${isGreeting ? "Greet the caller warmly in the language indicated, introduce you
     method: "POST",
     headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
+      model: "google/gemini-2.5-flash",
       messages: [{ role: "system", content: systemPrompt }, ...history],
       max_tokens: 150,
     }),
   });
+  if (!res.ok) {
+    console.error("LLM error", res.status, await res.text());
+    return "Sorry, could you repeat that?";
+  }
   const data = await res.json();
   return data.choices?.[0]?.message?.content ?? "Sorry, could you repeat that?";
 }
@@ -147,13 +151,20 @@ serve(async (req) => {
       return new Response("ok", { status: 200 });
     }
 
-    // Ensure conversation row exists
-    await admin.from("conversations").upsert({
-      id: sessionId,
-      language: "en-US",
-      status: "active",
-      transcript: [],
-    });
+    // Ensure conversation row exists (do not overwrite language/transcript on later hops)
+    const { data: existing } = await admin
+      .from("conversations")
+      .select("id")
+      .eq("id", sessionId)
+      .maybeSingle();
+    if (!existing) {
+      await admin.from("conversations").insert({
+        id: sessionId,
+        language: "en-US",
+        status: "active",
+        transcript: [],
+      });
+    }
 
     const { history, turn } = await loadHistory(sessionId);
 
