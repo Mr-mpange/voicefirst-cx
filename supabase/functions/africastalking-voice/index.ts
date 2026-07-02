@@ -21,6 +21,28 @@ const xml = (body: string) =>
 const sayAndHangup = (msg: string) =>
   xml(`<Say voice="en-US-Standard-C" playBeep="false">${escapeXml(msg)}</Say>`);
 
+const callbackUrl = () => `${SUPABASE_URL}/functions/v1/africastalking-voice`;
+
+const sayAndRecord = (msg: string, playBeep = false) =>
+  xml(
+    `<Say voice="en-US-Standard-C" playBeep="false">${escapeXml(msg)}</Say>` +
+      `<Record finishOnKey="#" maxLength="20" timeout="3" trimSilence="true" playBeep="${playBeep ? "true" : "false"}" callbackUrl="${callbackUrl()}"/>`
+  );
+
+const playOrSayAndRecord = async (sessionId: string, turn: number, msg: string, playBeep = false) => {
+  try {
+    const audio = await synthesizeMp3(msg);
+    const url = await uploadAudio(sessionId, turn, audio);
+    return xml(
+      `<Play url="${url}"/>` +
+        `<Record finishOnKey="#" maxLength="20" timeout="3" trimSilence="true" playBeep="${playBeep ? "true" : "false"}" callbackUrl="${callbackUrl()}"/>`
+    );
+  } catch (e) {
+    console.error("TTS failed; continuing call with AT Say fallback:", e);
+    return sayAndRecord(msg, playBeep);
+  }
+};
+
 function escapeXml(s: string) {
   return s.replace(/[<>&'"]/g, (c) =>
     ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" }[c]!)
@@ -170,9 +192,8 @@ serve(async (req) => {
 
     // Step 1: brand-new call → play a bilingual language menu (DTMF)
     if (history.length === 0 && !recordingUrl && !dtmfDigits) {
-      const cb = `${SUPABASE_URL}/functions/v1/africastalking-voice`;
       return xml(
-        `<GetDigits timeout="15" finishOnKey="#" numDigits="1" callbackUrl="${cb}">` +
+        `<GetDigits timeout="15" finishOnKey="#" numDigits="1" callbackUrl="${callbackUrl()}">` +
           `<Say voice="en-US-Standard-C" playBeep="false">` +
             `Welcome to Audient Assist. For English, press 1. Kwa Kiswahili, bonyeza 2. Pour le français, appuyez sur 3.` +
           `</Say>` +
@@ -193,31 +214,21 @@ serve(async (req) => {
         [{ role: "system", content: `The caller chose ${chosen.name}. Greet them in ${chosen.name}.` }],
         true,
       );
-      const audio = await synthesizeMp3(greeting);
-      const url = await uploadAudio(sessionId, turn, audio);
       await appendTranscript(sessionId, "ai", greeting);
-      return xml(
-        `<Play url="${url}"/><Record finishOnKey="#" maxLength="20" timeout="3" trimSilence="true" playBeep="false" callbackUrl="${SUPABASE_URL}/functions/v1/africastalking-voice"/>`
-      );
+      return await playOrSayAndRecord(sessionId, turn, greeting);
     }
 
     // We have a recording from the user
     if (recordingUrl) {
       const userText = await transcribeRecording(recordingUrl);
       if (!userText) {
-        return xml(
-          `<Say voice="en-US-Standard-C">I did not catch that. Please speak after the tone.</Say><Record finishOnKey="#" maxLength="20" timeout="3" trimSilence="true" playBeep="true" callbackUrl="${SUPABASE_URL}/functions/v1/africastalking-voice"/>`
-        );
+        return sayAndRecord("I did not catch that. Please speak after the tone.", true);
       }
       await appendTranscript(sessionId, "customer", userText);
       const fullHistory = [...history, { role: "user", content: userText }];
       const reply = await llmReply(fullHistory, false);
-      const audio = await synthesizeMp3(reply);
-      const url = await uploadAudio(sessionId, turn + 1, audio);
       await appendTranscript(sessionId, "ai", reply);
-      return xml(
-        `<Play url="${url}"/><Record finishOnKey="#" maxLength="20" timeout="3" trimSilence="true" playBeep="false" callbackUrl="${SUPABASE_URL}/functions/v1/africastalking-voice"/>`
-      );
+      return await playOrSayAndRecord(sessionId, turn + 1, reply);
     }
 
     return sayAndHangup("Goodbye.");
